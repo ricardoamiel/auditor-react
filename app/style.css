@@ -6,16 +6,6 @@
   --investigador: #2a78d6; --herramientas: #eb6834; --auditor: #1baf7a; --redactor: #eda100;
   --rechazo: #e34948; --idle: #d9d7d0;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #121211; --surface: #1a1a19; --border: #2f2e2b;
-    --text: #f0efec; --text2: #c3c2b7; --muted: #8f8e86;
-    --accent: #3987e5;
-    --investigador: #3987e5; --herramientas: #d95926; --auditor: #199e70; --redactor: #c98500;
-    --rechazo: #e66767; --idle: #3a3936;
-  }
-}
 :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #121211; --surface: #1a1a19; --border: #2f2e2b;
@@ -33,6 +23,9 @@ header { display: flex; justify-content: space-between; align-items: center; gap
 h1 { margin: 0; font-size: 24px; }
 h2 { margin: 0 0 6px; font-size: 15px; }
 .sub, .nota { margin: 2px 0 8px; color: var(--text2); font-size: 13px; }
+.lado { display: flex; align-items: center; gap: 14px; }
+.tema { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.tema:hover { border-color: var(--accent); }
 .estado { display: flex; align-items: center; gap: 8px; color: var(--text2); font-size: 13px; }
 .punto { width: 10px; height: 10px; border-radius: 50%; background: var(--idle); }
 .punto.listo { background: var(--auditor); }

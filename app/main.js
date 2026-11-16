@@ -147,6 +147,8 @@ async function mostrarResultados() {
 
 // ---------- Chat ----------
 function agregarMsg(clase, texto) {
+  const ultimo = $("mensajes").lastElementChild;
+  if (clase === "sistema" && ultimo && ultimo.className === "msg sistema" && ultimo.textContent === texto) return ultimo;
   const div = document.createElement("div");
   div.className = "msg " + clase;
   div.textContent = texto;
@@ -221,6 +223,17 @@ async function enviar(pregunta) {
   ocupado = false; $("enviar").disabled = false;
 }
 
+const SIN_WEBGPU = "Este navegador no tiene WebGPU activo, que es lo que permite correr el modelo en el navegador. " +
+  "En Chrome o Edge de Windows y macOS viene activo. En Linux abre chrome://flags, activa Unsafe WebGPU Support y Vulkan, y reinicia el navegador; " +
+  "en chrome://gpu debe aparecer WebGPU: Hardware accelerated. También puedes elegir el motor Servidor.";
+let webgpu = null;
+async function hayWebGPU() {
+  if (webgpu === null) {
+    try { webgpu = !!(navigator.gpu && (await navigator.gpu.requestAdapter())); } catch { webgpu = false; }
+  }
+  return webgpu;
+}
+
 async function cargar() {
   $("cargar").disabled = true;
   const motor = $("motor").value;
@@ -228,7 +241,7 @@ async function cargar() {
     estado("Cargando base de conocimiento", "ocupado");
     const n = await cargarKB((p) => { if (p.progress) $("progreso").style.width = p.progress * 0.3 + "%"; });
     if (motor !== "servidor") {
-      if (!navigator.gpu) throw new Error("Este navegador no tiene WebGPU. Usa Chrome o Edge recientes, o el motor Servidor.");
+      if (!(await hayWebGPU())) throw new Error(SIN_WEBGPU);
       const webllm = await import("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.86/+esm");
       engine = await webllm.CreateMLCEngine(motor, {
         initProgressCallback: (p) => { $("progreso").style.width = 30 + p.progress * 70 + "%"; estado(p.text.slice(0, 60), "ocupado"); },
@@ -256,7 +269,22 @@ for (const ej of EJEMPLOS) {
   b.onclick = () => { $("entrada").value = ej; $("entrada").focus(); };
   $("ejemplos").appendChild(b);
 }
+function aplicarTema(tema) {
+  document.documentElement.setAttribute("data-theme", tema);
+  $("tema").textContent = tema === "dark" ? "Modo claro" : "Modo oscuro";
+  try { localStorage.setItem("tema", tema); } catch {}
+}
+let temaGuardado = "light";
+try { temaGuardado = localStorage.getItem("tema") || "light"; } catch {}
+aplicarTema(temaGuardado);
+$("tema").addEventListener("click", () => {
+  aplicarTema(document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  if (!ocupado) { dibujarGrafo(); mostrarModo(); }
+  dibujarTimeline();
+});
+
 dibujarGrafo();
 mostrarModo();
 mostrarResultados();
+hayWebGPU().then((ok) => { if (!ok && $("motor").value !== "servidor") agregarMsg("sistema", SIN_WEBGPU); });
 addEventListener("resize", dibujarTimeline);
