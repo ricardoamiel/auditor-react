@@ -67,6 +67,7 @@ Los sistemas evaluados son naive_7b, multi_7b, multi_sin_auditor_7b, naive_1.5b 
 | app/agent.js | El mismo grafo y los mismos prompts en JavaScript, para correr en el navegador. |
 | app/py_worker.js | Ejecutor de Python con Pyodide en un Web Worker. |
 | app/server.py | API en FastAPI que ejecuta el grafo en Python y transmite cada evento a la página. |
+| PREGUNTAS.md | Contenido de cada fuente de la base de conocimiento y banco de preguntas para probar el sistema. |
 | presentacion/generador/contenido.js, render.js | Contenido de la exposición y generador de los PPTX y del HTML animado. |
 | slurm/*.sh | Jobs de Khipu (preparación, prueba corta y pipeline completo) y la sincronización de checkpoints. |
 | run_all.sh, setup_aws.sh, make_bundle.sh | Pipeline completo, arranque en una instancia en la nube y empaquetado para traspaso. |
@@ -105,6 +106,19 @@ Para usar el 7B desde Khipu:
 Con los modelos del navegador (1.5B o menos), el modo Naive RAG es el recomendado: en la evaluación el multiagente con 1.5B no superó al Naive y fue mucho más lento. El Naive solo consulta la base local, así que en preguntas que no están en WikiQA responde que el contexto no tiene la respuesta.
 
 Para probarla en local: python -m http.server 8080 dentro de app/ y abrir http://localhost:8080
+
+## Preguntas para probar
+
+PREGUNTAS.md describe qué contiene cada parte de la base de conocimiento y trae un banco de preguntas verificadas contra el índice, con su respuesta esperada y el modo recomendado. Las más útiles para una demostración:
+
+| Pregunta | Modo | Qué muestra |
+|---|---|---|
+| How many years passed between the opening of Central Park and the opening of the Kennywood amusement park? End your answer with a line: Final answer: number | Multiagente y luego Naive RAG | El multiagente busca dos veces y responde 41; el Naive suele fallar |
+| In which country is Machu Picchu located and in which century was it built? | Naive RAG | Respuesta directa desde la base: Perú, siglo XV |
+| What Is Range in Math | Naive RAG | Definición matemática desde WikiQA |
+| If 6 potatoes makes 36 hash browns, how many hash browns can you make out of 96 potatoes? | Multiagente | Calcula con Python: 576 |
+| Write a python function to find the largest prime factor of a given number, con sus tests (ver PREGUNTAS.md) | Multiagente con Auditor | El Auditor ejecuta los tests antes de aprobar |
+| Who wrote the novel The Time of the Hero (La ciudad y los perros)? | Multiagente | No está en la base: busca en la web y responde Mario Vargas Llosa |
 
 ## Presentación
 
