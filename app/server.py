@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import time
+import traceback
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "codes"))
 
@@ -54,21 +55,26 @@ class Consulta(BaseModel):
 @app.post("/chat")
 def chat(c: Consulta):
     def eventos():
-        if c.modo == "naive":
-            t0 = time.time()
-            r = naive_rag(llm, c.pregunta)
-            yield json.dumps({"nodo": "Redactor", "tipo": "respuesta", "texto": r["respuesta"], "ms": 1000 * (time.time() - t0)}) + "\n"
-            yield json.dumps({"fin": True, "respuesta": r["respuesta"]}) + "\n"
-            return
-        t, final = time.time(), ""
-        for paso in grafos[c.modo].stream(estado_inicial(c.pregunta), {"recursion_limit": 60}, stream_mode="updates"):
-            for nodo, cambio in paso.items():
-                ahora = time.time()
-                ev = {**cambio["traza"][-1], "ms": 1000 * (ahora - t)}
-                t = ahora
-                final = cambio.get("respuesta", final)
-                yield json.dumps(ev, ensure_ascii=False, default=str) + "\n"
-        yield json.dumps({"fin": True, "respuesta": final}, ensure_ascii=False) + "\n"
+        try:
+            if c.modo == "naive":
+                t0 = time.time()
+                r = naive_rag(llm, c.pregunta)
+                yield json.dumps({"nodo": "Redactor", "tipo": "respuesta", "texto": r["respuesta"], "ms": 1000 * (time.time() - t0)}) + "\n"
+                yield json.dumps({"fin": True, "respuesta": r["respuesta"]}) + "\n"
+                return
+            t, final = time.time(), ""
+            for paso in grafos[c.modo].stream(estado_inicial(c.pregunta), {"recursion_limit": 60}, stream_mode="updates"):
+                for nodo, cambio in paso.items():
+                    ahora = time.time()
+                    ev = {**cambio["traza"][-1], "ms": 1000 * (ahora - t)}
+                    t = ahora
+                    final = cambio.get("respuesta", final)
+                    yield json.dumps(ev, ensure_ascii=False, default=str) + "\n"
+            yield json.dumps({"fin": True, "respuesta": final}, ensure_ascii=False) + "\n"
+        except Exception as e:
+            # el 200 ya salió con el stream, así que el error viaja como último evento
+            traceback.print_exc()
+            yield json.dumps({"fin": True, "respuesta": f"Error en el servidor: {e!r}"}, ensure_ascii=False) + "\n"
     return StreamingResponse(eventos(), media_type="application/x-ndjson")
 
 
