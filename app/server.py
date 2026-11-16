@@ -4,6 +4,7 @@ Uso: python app/server.py   (luego elegir el motor Servidor en la página, URL h
 En Khipu: sbatch slurm/server.sh y un túnel ssh hacia el nodo (ver README).
 """
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -23,7 +24,8 @@ from retriever import Retriever
 
 grande = torch.cuda.is_available() and torch.cuda.get_device_properties(0).total_memory > 8e9
 tools.RETRIEVER = Retriever.cargar()
-MODELO = LLM_7B if grande else LLM_15B
+# MODELO_LLM permite cargar una copia local ya cuantizada (por ejemplo desde Google Drive en Colab)
+MODELO = os.environ.get("MODELO_LLM") or (LLM_7B if grande else LLM_15B)
 llm = LLM(MODELO)
 grafos = {"multi": construir_grafo(llm, True), "multi_sin_auditor": construir_grafo(llm, False)}
 

@@ -322,6 +322,10 @@ $("tema").addEventListener("click", () => {
   dibujarTimeline();
 });
 
+// Un enlace con ?servidor=URL deja la página lista para usar ese servidor (lo imprime el notebook de Colab)
+const servidorEnlace = new URLSearchParams(location.search).get("servidor");
+if (servidorEnlace) { $("motor").value = "servidor"; $("url").value = servidorEnlace; $("lblUrl").hidden = false; }
+
 dibujarGrafo();
 mostrarModo();
 mostrarResultados();
