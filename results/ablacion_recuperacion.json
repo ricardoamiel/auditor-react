@@ -1,0 +1,32 @@
+[
+  {
+    "embedder": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "dim": 384,
+    "seg_indexar": 154.24394822120667,
+    "ms_por_consulta": 17.274677017588676,
+    "hit@1": 0.8189300411522634,
+    "hit@3": 0.8930041152263375,
+    "hit@5": 0.9300411522633745,
+    "hit@10": 0.9547325102880658
+  },
+  {
+    "embedder": "sentence-transformers/all-MiniLM-L6-v2",
+    "dim": 384,
+    "seg_indexar": 130.2646999359131,
+    "ms_por_consulta": 10.897088933874059,
+    "hit@1": 0.9629629629629629,
+    "hit@3": 0.9958847736625515,
+    "hit@5": 0.9958847736625515,
+    "hit@10": 0.9958847736625515
+  },
+  {
+    "embedder": "BAAI/bge-small-en-v1.5",
+    "dim": 384,
+    "seg_indexar": 261.8920567035675,
+    "ms_por_consulta": 22.525826599372266,
+    "hit@1": 0.9753086419753086,
+    "hit@3": 0.9917695473251029,
+    "hit@5": 0.9958847736625515,
+    "hit@10": 0.9958847736625515
+  }
+]
