@@ -1,0 +1,6 @@
+,Faithfulness,Answer Relevance,Acierto WikiQA,Recuperación WikiQA,Exactitud GSM8K,Tests MBPP,Acierto global,Segundos por consulta,Llamadas al LLM,Tokens generados
+Multiagente 7B,0.837,0.68,0.8,1.0,1.0,0.533,0.78,44.641,6.16,834.56
+Naive RAG 7B,0.912,0.718,0.85,1.0,1.0,0.467,0.78,4.832,1.0,92.1
+Multiagente sin Auditor 7B,0.843,0.682,0.8,1.0,0.933,0.467,0.74,38.638,4.22,479.84
+Multiagente 1.5B,0.47,0.435,0.65,0.4,0.6,0.133,0.48,49.409,6.84,830.18
+Naive RAG 1.5B,0.778,0.642,0.6,1.0,0.733,0.133,0.5,3.837,1.0,108.04
