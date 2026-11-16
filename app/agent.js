@@ -36,11 +36,15 @@ Responde exactamente en dos líneas:
 VEREDICTO: APROBADO o RECHAZADO
 MOTIVO: una oración`;
 
+// Los modelos pequeños copian literalmente reglas condicionales ("Final answer: número"),
+// así que la regla de formato se decide en código y solo se envía cuando aplica.
+const esCodigoP = p => /must pass these tests|assert |def |python/i.test(p);
+const esMateP = p => /\d/.test(p) && !esCodigoP(p);
+const formato = p => esCodigoP(p) ? "\nEntrega la función completa dentro de un bloque ```python."
+  : esMateP(p) ? "\nTermina con una última línea con este formato exacto: Final answer: seguido del número." : "";
+
 const P_RED = `Eres el Agente Redactor. Escribes la respuesta final para el usuario usando solo el reporte aprobado.
-Reglas:
-1. Responde en el idioma de la pregunta, de forma breve y directa, citando los [id] de las fuentes.
-2. Solo si la pregunta es un problema de matemáticas con enunciado, termina con una línea: Final answer: número. En preguntas de hechos no agregues esa línea.
-3. Si la pregunta pide código, copia la función del reporte sin cambios dentro de un bloque \`\`\`python.`;
+Responde en el idioma de la pregunta, de forma breve y directa, citando los [id] de las fuentes.`;
 
 // Base de conocimiento: textos y embeddings int8 exportados por codes/export_web.py
 let KB = null, VEC = null, embedder = null;
@@ -170,7 +174,7 @@ export async function correrAgentes(pregunta, llm, { conAuditor = true, emit = (
     } else if (nodo === "Redactor") {
       let resp = "";
       await paso("Redactor", async () => {
-        resp = await llm([{ role: "system", content: P_RED }, { role: "user", content: `Pregunta: ${pregunta}\n\nReporte aprobado:\n${s.reporte}` }], 500);
+        resp = await llm([{ role: "system", content: P_RED }, { role: "user", content: `Pregunta: ${pregunta}\n\nReporte aprobado:\n${s.reporte}${formato(pregunta)}` }], 500);
         return { tipo: "respuesta", texto: resp };
       });
       nodo = "Fin";
@@ -187,8 +191,8 @@ export async function naiveRAG(pregunta, llm, { emit = () => {} } = {}) {
   emit({ nodo: "Herramientas", tipo: "observation", accion: "buscar_kb", texto: obs, docs, ms: performance.now() - t0 });
   emit({ nodo: "Redactor", tipo: "inicio" });
   t0 = performance.now();
-  const r = await llm([{ role: "system", content: "Responde la pregunta usando solo el contexto, en el idioma de la pregunta, citando los [id]. Solo si es un problema de matemáticas con enunciado, termina con una línea: Final answer: número. Si pide código, entrega la función en un bloque ```python." },
-    { role: "user", content: `Contexto:\n${obs}\n\nPregunta: ${pregunta}` }], 500);
+  const r = await llm([{ role: "system", content: "Responde la pregunta usando solo el contexto, en el idioma de la pregunta, citando los [id]. Si el contexto no contiene la respuesta, dilo en una frase en vez de adivinar." },
+    { role: "user", content: `Contexto:\n${obs}\n\nPregunta: ${pregunta}${formato(pregunta)}` }], 500);
   emit({ nodo: "Redactor", tipo: "respuesta", texto: r, ms: performance.now() - t0 });
   return r;
 }

@@ -1,6 +1,7 @@
 """API opcional para la aplicación web: ejecuta el grafo en Python con Qwen2.5 7B y transmite cada evento.
 
 Uso: python app/server.py   (luego elegir el motor Servidor en la página, URL http://localhost:8000)
+En Khipu: sbatch slurm/server.sh y un túnel ssh hacia el nodo (ver README).
 """
 import json
 import sys
@@ -22,11 +23,25 @@ from retriever import Retriever
 
 grande = torch.cuda.is_available() and torch.cuda.get_device_properties(0).total_memory > 8e9
 tools.RETRIEVER = Retriever.cargar()
-llm = LLM(LLM_7B if grande else LLM_15B)
+MODELO = LLM_7B if grande else LLM_15B
+llm = LLM(MODELO)
 grafos = {"multi": construir_grafo(llm, True), "multi_sin_auditor": construir_grafo(llm, False)}
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+
+@app.middleware("http")
+async def red_privada(request, call_next):
+    # Chrome pide este permiso cuando una página publicada (GitHub Pages) llama a localhost
+    r = await call_next(request)
+    r.headers["Access-Control-Allow-Private-Network"] = "true"
+    return r
+
+
+@app.get("/salud")
+def salud():
+    return {"modelo": MODELO, "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu"}
 
 
 class Consulta(BaseModel):

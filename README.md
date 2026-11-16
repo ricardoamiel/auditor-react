@@ -96,6 +96,14 @@ Se publica con GitHub Pages desde app/. Tiene dos motores:
 1. **Navegador:** Qwen2.5 1.5B corre con WebGPU en Chrome o Edge, los embeddings con transformers.js y el código Python con Pyodide. No necesita servidor.
 2. **Servidor:** python app/server.py en una máquina con GPU, y la página se conecta a http://localhost:8000. Para un servidor remoto se abre un túnel con ssh -L 8000:localhost:8000 usuario@instancia.
 
+Para usar el 7B desde Khipu:
+
+1. En el nodo de login: cd ~/nlp_final y sbatch slurm/server.sh. El job carga Qwen2.5 7B en un nodo con A6000 y queda escuchando en el puerto 8000 por 3 horas.
+2. Con squeue se ve el nodo asignado (por ejemplo ds001). En la laptop se abre el túnel: ssh -N -L 8000:ds001:8000 usuario@khipu.utec.edu.pe
+3. En la página se elige el motor Servidor con la URL http://localhost:8000 y se presiona Cargar modelo; el estado muestra el modelo y la GPU del servidor.
+
+Con los modelos del navegador (1.5B o menos), el modo Naive RAG es el recomendado: en la evaluación el multiagente con 1.5B no superó al Naive y fue mucho más lento. El Naive solo consulta la base local, así que en preguntas que no están en WikiQA responde que el contexto no tiene la respuesta.
+
 Para probarla en local: python -m http.server 8080 dentro de app/ y abrir http://localhost:8080
 
 ## Presentación

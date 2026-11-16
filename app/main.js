@@ -186,10 +186,20 @@ async function llmNavegador(mensajes, max, stop) {
 // Límites para el navegador: menos pasos, un rechazo, respuestas más cortas y 2 minutos como máximo
 const PRESUPUESTO_NAVEGADOR = { maxPasos: 3, maxRechazos: 1, maxTokens: 350, limiteMs: 120000 };
 
+const SIN_SERVIDOR = (url) => `No hay un servidor respondiendo en ${url}. Esta página solo es la interfaz: el modelo 7B corre en una máquina con GPU ` +
+  "con python app/server.py, y si esa máquina es remota se abre un túnel ssh -L 8000:localhost:8000 hacia ella. Los pasos están en el README.";
+async function servidorVivo(url) {
+  try {
+    const r = await fetch(url + "/salud", { signal: AbortSignal.timeout(5000) });
+    return r.ok ? await r.json() : null;
+  } catch { return null; }
+}
 async function viaServidor(pregunta, modo, emit) {
-  const r = await fetch($("url").value.replace(/\/$/, "") + "/chat", {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pregunta, modo }),
-  });
+  const url = $("url").value.replace(/\/$/, "");
+  let r;
+  try {
+    r = await fetch(url + "/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pregunta, modo }) });
+  } catch { throw new Error(SIN_SERVIDOR(url)); }
   const lector = r.body.getReader(), dec = new TextDecoder();
   let buf = "", resp = "";
   for (;;) {
@@ -254,7 +264,13 @@ async function cargar() {
   try {
     estado("Cargando base de conocimiento", "ocupado");
     const n = await cargarKB((p) => { if (p.progress) $("progreso").style.width = p.progress * 0.3 + "%"; });
-    if (motor !== "servidor") {
+    let etiqueta = `${n} documentos indexados`;
+    if (motor === "servidor") {
+      const url = $("url").value.replace(/\/$/, "");
+      const info = await servidorVivo(url);
+      if (!info) throw new Error(SIN_SERVIDOR(url));
+      etiqueta = `servidor con ${info.modelo.split("/").pop()} en ${info.gpu}`;
+    } else {
       if (!(await hayWebGPU())) throw new Error(SIN_WEBGPU);
       const webllm = await import("https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.86/+esm");
       engine = await webllm.CreateMLCEngine(motor, {
@@ -262,7 +278,7 @@ async function cargar() {
       });
     }
     $("progreso").style.width = "100%";
-    estado(`Listo: ${n} documentos indexados`, "listo");
+    estado(`Listo: ${etiqueta}`, "listo");
     $("entrada").disabled = false; $("enviar").disabled = false;
   } catch (e) {
     estado("No se pudo cargar", "");
