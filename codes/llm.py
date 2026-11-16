@@ -24,8 +24,11 @@ class LLM:
     def chat(self, mensajes, max_new_tokens=512, stop=None):
         """mensajes: lista de dicts con role y content. stop: cadenas donde se corta la generación."""
         t0 = time.time()
-        ids = self.tok.apply_chat_template(mensajes, add_generation_prompt=True, return_tensors="pt").to(self.model.device)
-        out = self.model.generate(ids, max_new_tokens=max_new_tokens, do_sample=False,
+        # return_dict fija la salida: transformers 5 devuelve un diccionario y 4.x un tensor si no se pide
+        entrada = self.tok.apply_chat_template(mensajes, add_generation_prompt=True, return_tensors="pt",
+                                               return_dict=True).to(self.model.device)
+        ids = entrada["input_ids"]
+        out = self.model.generate(ids, attention_mask=entrada["attention_mask"], max_new_tokens=max_new_tokens, do_sample=False,
                                   stop_strings=stop, tokenizer=self.tok if stop else None,
                                   pad_token_id=self.tok.eos_token_id)
         nuevos = out[0, ids.shape[1]:]
