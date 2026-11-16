@@ -70,3 +70,5 @@ th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--bor
 th:first-child, td:first-child { text-align: left; }
 footer { color: var(--muted); font-size: 12px; padding: 24px 16px; }
 @media (max-width: 900px) { main { grid-template-columns: 1fr; } .chat { min-height: 420px; } }
+
+#enviar.detener { background: var(--rechazo); }

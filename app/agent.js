@@ -98,7 +98,12 @@ export const extraerCodigo = t => {
 };
 
 // Recorre el grafo: Investigador, Herramientas, Auditor y Redactor. emit recibe cada evento de la traza.
-export async function correrAgentes(pregunta, llm, { conAuditor = true, emit = () => {} } = {}) {
+// Presupuesto: en el navegador se usan límites menores que en Python para que una consulta no tarde minutos.
+// detener() permite cortar desde la interfaz; limiteMs fuerza el reporte final cuando se acaba el tiempo.
+export async function correrAgentes(pregunta, llm, { conAuditor = true, emit = () => {}, maxPasos = MAX_PASOS, maxRechazos = MAX_RECHAZOS,
+  maxTokens = 600, limiteMs = Infinity, detener = () => false } = {}) {
+  const inicio = performance.now();
+  const sinTiempo = () => performance.now() - inicio > limiteMs;
   const s = { pasos: [], contextos: [], reporte: "", feedback: "", rechazos: 0, pasosIntento: 0, accion: null };
   let nodo = "Investigador";
   const paso = async (nombre, f) => {
@@ -107,16 +112,18 @@ export async function correrAgentes(pregunta, llm, { conAuditor = true, emit = (
     emit({ nodo: nombre, ...ev, ms: performance.now() - t0 });
   };
   while (nodo !== "Fin") {
+    if (detener()) throw new Error("Consulta detenida.");
+    if (sinTiempo()) { s.pasosIntento = maxPasos; s.rechazos = maxRechazos; }  // se acabó el tiempo: cerrar con lo que hay
     if (nodo === "Investigador") {
       await paso("Investigador", async () => {
         const scratch = s.pasos.map(p => `Thought: ${p.thought}\nAction: ${p.accion}\nAction Input: ${p.entrada}\nObservation: ${p.obs}`).join("\n");
         let tarea = `Pregunta: ${pregunta}`;
         if (s.feedback) tarea += `\n\nEl Auditor rechazó tu reporte anterior. Motivo: ${s.feedback}\nCorrige el problema.`;
-        if (s.pasosIntento >= MAX_PASOS) tarea += "\n\nYa no puedes usar más herramientas: escribe ahora el Final Report.";
-        const t = await llm([{ role: "system", content: P_INV }, { role: "user", content: tarea + (scratch ? "\n\n" + scratch : "") }], 600, ["Observation:"]);
+        if (s.pasosIntento >= maxPasos) tarea += "\n\nYa no puedes usar más herramientas: escribe ahora el Final Report.";
+        const t = await llm([{ role: "system", content: P_INV }, { role: "user", content: tarea + (scratch ? "\n\n" + scratch : "") }], maxTokens, ["Observation:"]);
         const th = (t.match(/Thought:\s*([\s\S]*?)(?:\nAction:|\nFinal Report:|$)/) || [, t.slice(0, 200)])[1].trim();
         // Sin Action el turno se toma como reporte final (el modelo a veces escribe Final answer en vez de Final Report)
-        if (t.includes("Final Report:") || !t.includes("Action:") || s.pasosIntento >= MAX_PASOS) {
+        if (t.includes("Final Report:") || !t.includes("Action:") || s.pasosIntento >= maxPasos) {
           s.reporte = t.split("Final Report:").pop().trim(); s.accion = null;
           return { tipo: "reporte", texto: s.reporte };
         }
@@ -152,7 +159,7 @@ export async function correrAgentes(pregunta, llm, { conAuditor = true, emit = (
           const t = await llm([{ role: "system", content: P_AUD }, { role: "user", content: `Pregunta: ${pregunta}\n\nObservaciones:\n${ev}\n\nReporte:\n${s.reporte}` }], 80);
           if (t.toUpperCase().includes("RECHAZADO")) motivo = t.split("MOTIVO:").pop().trim() || "Reporte no respaldado.";
         }
-        if (motivo && s.rechazos < MAX_RECHAZOS) {
+        if (motivo && s.rechazos < maxRechazos) {
           s.feedback = motivo; s.rechazos++; s.pasosIntento = 0; rechazado = true;
           return { tipo: "rechazo", texto: motivo };
         }
