@@ -1,0 +1,16 @@
+torch
+transformers>=4.51
+accelerate
+bitsandbytes
+sentence-transformers
+faiss-cpu
+datasets
+langgraph
+langchain-core
+ddgs
+requests
+pysocks
+matplotlib
+networkx
+fastapi
+uvicorn

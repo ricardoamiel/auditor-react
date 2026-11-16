@@ -1,0 +1,48 @@
+# Modelos y cachés pesados
+models/*
+!models/README.md
+data/index/
+data/*.jsonl
+*.safetensors
+*.bin
+.cache/
+
+# Python y notebooks
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+.env
+
+# LaTeX
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+paper/*.bbl
+paper/*.blg
+
+# SLURM
+slurm/logs/*.out
+slurm/logs/*.err
+
+# generador de la presentación
+presentacion/generador/node_modules/
+
+# Datos, índices y logs: se regeneran con codes/prepare_data.py y los scripts
+/data/
+slurm/logs/
+*.zip
+
+# Entornos y secretos
+venv/
+env/
+.env.*
+*.token
+.netrc
+.huggingface/
+
+# Sistema
+.DS_Store
