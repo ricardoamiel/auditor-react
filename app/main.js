@@ -160,7 +160,7 @@ function agregarMsg(clase, texto) {
 function estado(texto, clase = "") { $("estado").textContent = texto; $("punto").className = "punto " + clase; }
 
 function onEvento(ev, t0) {
-  if (ev.tipo === "inicio") { activar(ev.nodo); estado(`${ev.nodo} trabajando`, "ocupado"); return; }
+  if (ev.tipo === "inicio") { nodoActual = ev.nodo; activar(ev.nodo); estado(`${ev.nodo} trabajando`, "ocupado"); return; }
   if (ev.nodo !== previo) activar(ev.nodo);  // eventos del servidor llegan sin evento de inicio
   const etiqueta = ev.nodo + (ev.accion ? `: ${ev.accion}` : ev.tipo === "rechazo" ? ": rechazo" : "");
   const ms = ev.ms ?? 0;
@@ -170,10 +170,21 @@ function onEvento(ev, t0) {
   if (ev.docs) mostrarEvidencia(ev.docs);
 }
 
+// Genera en streaming para mostrar el avance (tokens y velocidad) mientras el agente trabaja
+let detenido = false, nodoActual = "";
 async function llmNavegador(mensajes, max, stop) {
-  const r = await engine.chat.completions.create({ messages: mensajes, temperature: 0, max_tokens: max, stop });
-  return r.choices[0].message.content || "";
+  const t0 = performance.now();
+  let texto = "", n = 0;
+  const flujo = await engine.chat.completions.create({ messages: mensajes, temperature: 0, max_tokens: max, stop, stream: true });
+  for await (const parte of flujo) {
+    texto += parte.choices[0]?.delta?.content || "";
+    n++;
+    if (n % 8 === 0) estado(`${nodoActual}: ${n} tokens, ${(n / ((performance.now() - t0) / 1000)).toFixed(1)} tokens/s`, "ocupado");
+  }
+  return texto;
 }
+// Límites para el navegador: menos pasos, un rechazo, respuestas más cortas y 2 minutos como máximo
+const PRESUPUESTO_NAVEGADOR = { maxPasos: 3, maxRechazos: 1, maxTokens: 350, limiteMs: 120000 };
 
 async function viaServidor(pregunta, modo, emit) {
   const r = await fetch($("url").value.replace(/\/$/, "") + "/chat", {
@@ -197,7 +208,8 @@ async function viaServidor(pregunta, modo, emit) {
 
 async function enviar(pregunta) {
   if (ocupado || !pregunta.trim()) return;
-  ocupado = true; $("enviar").disabled = true;
+  ocupado = true; detenido = false;
+  $("enviar").textContent = "Detener"; $("enviar").classList.add("detener");
   agregarMsg("usuario", pregunta);
   reiniciarGrafo(); pasos = []; dibujarTimeline();
   d3.select("#evidencia").html("");
@@ -207,7 +219,7 @@ async function enviar(pregunta) {
     let resp;
     if ($("motor").value === "servidor") resp = await viaServidor(pregunta, modo, emit);
     else if (modo === "naive") resp = await naiveRAG(pregunta, llmNavegador, { emit });
-    else resp = await correrAgentes(pregunta, llmNavegador, { conAuditor: modo === "multi", emit });
+    else resp = await correrAgentes(pregunta, llmNavegador, { conAuditor: modo === "multi", emit, detener: () => detenido, ...PRESUPUESTO_NAVEGADOR });
     terminarGrafo();
     const div = agregarMsg("bot", resp);
     const meta = document.createElement("span");
@@ -217,10 +229,12 @@ async function enviar(pregunta) {
     div.appendChild(meta);
     estado("Listo", "listo");
   } catch (e) {
-    agregarMsg("sistema", "Error: " + e.message);
-    estado("Error", "");
+    agregarMsg("sistema", detenido ? "Consulta detenida." : "Error: " + e.message);
+    estado(detenido ? "Detenido" : "Error", detenido ? "listo" : "");
+    terminarGrafo();
   }
-  ocupado = false; $("enviar").disabled = false;
+  ocupado = false;
+  $("enviar").textContent = "Enviar"; $("enviar").classList.remove("detener");
 }
 
 const SIN_WEBGPU = "Este navegador no tiene WebGPU activo, que es lo que permite correr el modelo en el navegador. " +
@@ -260,8 +274,17 @@ async function cargar() {
 $("motor").addEventListener("change", () => { $("lblUrl").hidden = $("motor").value !== "servidor"; $("cargar").disabled = false; });
 $("cargar").addEventListener("click", cargar);
 $("modo").addEventListener("change", () => { reiniciarGrafo(); mostrarModo(); });
-$("form").addEventListener("submit", (e) => { e.preventDefault(); const t = $("entrada").value; $("entrada").value = ""; enviar(t); });
-$("entrada").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("form").requestSubmit(); } });
+$("form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (ocupado) {  // el mismo botón detiene la consulta en curso
+    detenido = true;
+    if (engine) engine.interruptGenerate();
+    estado("Deteniendo", "ocupado");
+    return;
+  }
+  const t = $("entrada").value; $("entrada").value = ""; enviar(t);
+});
+$("entrada").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!ocupado) $("form").requestSubmit(); } });
 for (const ej of EJEMPLOS) {
   const b = document.createElement("button");
   b.type = "button"; b.textContent = ej.split("\n")[0].slice(0, 48) + (ej.length > 48 ? "…" : "");
