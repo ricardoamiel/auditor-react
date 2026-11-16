@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auditor ReAct</title>
+<meta name="description" content="Asistente multiagente ReAct que investiga, audita y redacta respuestas verificadas, ejecutándose en el navegador.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>Auditor ReAct</h1>
+    <p class="sub">Investigador, Auditor de Hechos y Redactor trabajando sobre WikiQA, GSM8K y MBPP</p>
+  </div>
+  <div class="estado"><span id="punto" class="punto"></span><span id="estado">Modelo sin cargar</span></div>
+</header>
+
+<section class="controles">
+  <label>Motor
+    <select id="motor">
+      <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Navegador: Qwen2.5 1.5B (1 GB)</option>
+      <option value="Qwen2.5-0.5B-Instruct-q4f16_1-MLC">Navegador: Qwen2.5 0.5B (0.4 GB, rápido)</option>
+      <option value="Qwen2.5-3B-Instruct-q4f16_1-MLC">Navegador: Qwen2.5 3B (2 GB)</option>
+      <option value="servidor">Servidor: API en Python (Qwen2.5 7B)</option>
+    </select>
+  </label>
+  <label id="lblUrl" hidden>URL del servidor <input id="url" value="http://localhost:8000"></label>
+  <label>Sistema
+    <select id="modo">
+      <option value="multi">Multiagente con Auditor</option>
+      <option value="multi_sin_auditor">Multiagente sin Auditor</option>
+      <option value="naive">Naive RAG de un paso</option>
+    </select>
+  </label>
+  <button id="cargar">Cargar modelo</button>
+  <div class="barra"><div id="progreso"></div></div>
+</section>
+
+<main>
+  <section class="chat card">
+    <h2>Conversación</h2>
+    <div id="mensajes" class="mensajes">
+      <div class="msg sistema">Carga el modelo y escribe una consulta. Puedes preguntar hechos, resolver problemas numéricos o pedir una función de Python con sus tests. Todo se ejecuta en tu navegador.</div>
+    </div>
+    <div class="ejemplos" id="ejemplos"></div>
+    <form id="form">
+      <textarea id="entrada" rows="3" placeholder="Escribe tu consulta" disabled></textarea>
+      <button id="enviar" disabled>Enviar</button>
+    </form>
+  </section>
+
+  <section class="viz">
+    <div class="card">
+      <h2>Grafo de agentes</h2>
+      <p class="nota">El nodo activo se resalta; los contadores indican cuántas veces se visitó cada agente en la consulta actual.</p>
+      <svg id="grafo" viewBox="0 0 640 260" role="img" aria-label="Grafo de agentes"></svg>
+    </div>
+    <div class="card">
+      <h2>Línea de tiempo</h2>
+      <p class="nota">Cada barra es un paso del flujo; su largo es el tiempo que tomó.</p>
+      <div id="timeline"></div>
+    </div>
+    <div class="card">
+      <h2>Evidencia recuperada</h2>
+      <div id="evidencia"><p class="nota">Aún no hay documentos.</p></div>
+    </div>
+    <div class="card">
+      <h2>Resultados de la evaluación</h2>
+      <p class="nota">Promedios sobre las 50 consultas del proyecto, calculados en el clúster.</p>
+      <div id="resultados"></div>
+      <p class="nota">En 15 consultas multisalto, que exigen combinar dos documentos y calcular, el multiagente acierta 0.93 frente a 0.53 del Naive RAG. Recomendación de uso: Naive RAG para preguntas directas y el multiagente para preguntas compuestas, cálculos o código.</p>
+    </div>
+  </section>
+</main>
+<div id="tooltip" class="tooltip" hidden></div>
+<footer>Proyecto final de Procesamiento de Lenguaje Natural, UTEC 2026. Ricardo Amiel Acuña Villogas, Juan Leibniz Aquino Espinoza y Josué Nehemías Velo Poma. Modelos abiertos: Qwen2.5 y all MiniLM L6.</footer>
+<script type="module" src="main.js"></script>
+</body>
+</html>
