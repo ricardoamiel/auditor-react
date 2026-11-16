@@ -67,6 +67,7 @@ Los sistemas evaluados son naive_7b, multi_7b, multi_sin_auditor_7b, naive_1.5b 
 | app/agent.js | El mismo grafo y los mismos prompts en JavaScript, para correr en el navegador. |
 | app/py_worker.js | Ejecutor de Python con Pyodide en un Web Worker. |
 | app/server.py | API en FastAPI que ejecuta el grafo en Python y transmite cada evento a la página. |
+| notebooks/servidor_colab.ipynb | Levanta en Colab el servidor del 7B con un túnel público y devuelve el enlace a la aplicación. |
 | PREGUNTAS.md | Contenido de cada fuente de la base de conocimiento y banco de preguntas para probar el sistema. |
 | presentacion/generador/contenido.js, render.js | Contenido de la exposición y generador de los PPTX y del HTML animado. |
 | slurm/*.sh | Jobs de Khipu (preparación, prueba corta y pipeline completo) y la sincronización de checkpoints. |
@@ -102,6 +103,14 @@ Para usar el 7B desde Khipu:
 1. En el nodo de login: cd ~/nlp_final y sbatch slurm/server.sh. El job carga Qwen2.5 7B en un nodo con A6000 y queda escuchando en el puerto 8000 por 3 horas.
 2. Con squeue se ve el nodo asignado (por ejemplo ds001). En la laptop se abre el túnel: ssh -N -L 8000:ds001:8000 usuario@khipu.utec.edu.pe
 3. En la página se elige el motor Servidor con la URL http://localhost:8000 y se presiona Cargar modelo; el estado muestra el modelo y la GPU del servidor.
+
+Para usar el 7B desde Google Colab (sin Khipu ni túnel SSH):
+
+1. Abrir notebooks/servidor_colab.ipynb en Colab con GPU T4 y ejecutar todo.
+2. El notebook clona el repositorio, instala dependencias, construye o recupera el índice, carga Qwen2.5 7B en 4 bits, lanza app/server.py y abre un túnel https público con Cloudflare (sin cuenta).
+3. La última celda imprime un enlace a la aplicación con el servidor ya configurado (parámetro ?servidor= en la URL). Funciona desde cualquier computadora o celular.
+
+La primera vez tarda de 10 a 15 minutos. Con la opción USAR_DRIVE el índice y el modelo ya cuantizado (unos 5.5 GB) quedan en Google Drive, y las siguientes sesiones arrancan en 4 a 6 minutos. Guardar los 15 GB originales en Drive no conviene: leerlos desde Drive tarda lo mismo que descargarlos. En la T4 una consulta multiagente tarda entre 60 y 120 s. La URL del túnel cambia en cada sesión y Colab gratuito corta la sesión tras un rato sin uso.
 
 Con los modelos del navegador (1.5B o menos), el modo Naive RAG es el recomendado: en la evaluación el multiagente con 1.5B no superó al Naive y fue mucho más lento. El Naive solo consulta la base local, así que en preguntas que no están en WikiQA responde que el contexto no tiene la respuesta.
 
