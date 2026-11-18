@@ -14,8 +14,9 @@ const { C, S } = require("./contenido");
 
 const ROOT = path.join(__dirname, "..");
 const AS = path.join(ROOT, "assets");
-const OUT_PPTX = path.join(ROOT, "Presentacion_Auditor_ReAct.pptx");
-const OUT_HTML = path.join(ROOT, "Presentacion_Auditor_ReAct.html");
+const SUF = process.env.VERSION === "corta" ? "_corta" : "";
+const OUT_PPTX = path.join(ROOT, `Presentacion_Auditor_ReAct${SUF}.pptx`);
+const OUT_HTML = path.join(ROOT, `Presentacion_Auditor_ReAct${SUF}.html`);
 const W = 13.333, H = 7.5, PX = 144; // 1 pulgada = 144 px en un escenario de 1920 x 1080
 const FONT = "Arial";
 const MARGIN = 4; // pt
@@ -47,7 +48,7 @@ async function buildPptx(soloFinal) {
   const pres = new pptxgen();
   pres.layout = "LAYOUT_WIDE";
   pres.title = "Auditor ReAct: sistema multiagente con guardrails";
-  pres.author = "Ricardo Amiel Acuña Villogas, Juan Leibniz Aquino Espinoza y Josué Nehemías Velo Poma";
+  pres.author = "Ricardo Acuña, Juan Aquino y Josué Velo";
   pres.theme = { headFontFace: FONT, bodyFontFace: FONT };
 
   pres.defineSlideMaster({ title: "CONTENIDO", background: { color: C.wh }, objects: [{ image: { x: 0, y: 0, w: W, h: H, path: path.join(AS, "fondo_contenido.png") } }] });
