@@ -4,7 +4,7 @@
   "private": true,
   "description": "Genera la presentación del proyecto final (PPTX y HTML) desde contenido.js",
   "scripts": {
-    "build": "node render.js"
+    "build": "node render.js && VERSION=corta node render.js"
   },
   "dependencies": {
     "pptxgenjs": "^3.12.0",
