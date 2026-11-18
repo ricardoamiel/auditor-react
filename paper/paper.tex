@@ -27,7 +27,7 @@
 \graphicspath{{../figures/}}
 
 \title{\textbf{Auditor ReAct: un sistema multiagente con guardrails para auditoría de hechos, razonamiento matemático y código}}
-\author{Ricardo Amiel Acuña Villogas \and Juan Leibniz Aquino Espinoza \and Josué Nehemías Velo Poma\\[1mm] \small Procesamiento de Lenguaje Natural, UTEC}
+\author{Ricardo A. Acuña-Villogas \and Juan Aquino-Espinoza \and Josué Velo\\[1mm] \small Procesamiento de Lenguaje Natural, UTEC}
 \date{Noviembre 2026}
 
 \begin{document}
@@ -67,7 +67,9 @@ Un Naive RAG recupera una vez y genera una vez: si el contexto recuperado no con
 \item \textbf{Redactor.} Convierte el reporte aprobado en la respuesta final, citando los identificadores de las fuentes.
 \end{enumerate}
 
-\textbf{Herramientas.} buscar\_kb consulta un índice FAISS de producto interno sobre embeddings normalizados de all MiniLM L6 \cite{reimers2019sbert} (similitud coseno) con 10\,758 documentos: un documento por título de WikiQA, los problemas resueltos de GSM8K train y los programas de MBPP train. buscar\_web usa DuckDuckGo con respaldo en la API de Wikipedia. ejecutar\_python corre el código en un proceso aislado con límite de tiempo.
+\textbf{Herramientas.} buscar\_kb consulta un índice FAISS de producto interno sobre embeddings normalizados de all MiniLM L6 \cite{reimers2019sbert} (similitud coseno) con 10\,758 documentos: un documento por título de WikiQA, los problemas resueltos de GSM8K train y los programas de MBPP train. buscar\_web usa DuckDuckGo con respaldo en la API de Wikipedia. ejecutar\_python corre el código en un proceso aislado con límite de 10 segundos. Cualquier error de una herramienta (un nombre inexistente, código que no imprime, un timeout o la web caída) vuelve al Investigador como Observation y no interrumpe el grafo.
+
+\textbf{Procesamiento de datos.} WikiQA llega como pares de pregunta y oración candidata; las oraciones se agrupan por título, sin duplicados y en su orden, y cada artículo es un documento (2\,811, mediana de 1\,065 caracteres). De GSM8K se indexan los 7\,473 problemas de train con su solución (mediana 511) y de MBPP los 474 enunciados con su función de train, validation y prompt (mediana 240); los tests y el código de setup se guardan aparte para el Auditor. Los documentos son cortos y se indexan enteros, sin trocear. La respuesta oro de GSM8K es el número tras \#\#\#\#, sin comas. Para la aplicación web los mismos vectores se exportan cuantizados a int8.
 
 \textbf{Referencia.} El Naive RAG recupera los 4 documentos más similares a la pregunta y genera la respuesta en una sola llamada, con el mismo modelo.
 
@@ -97,11 +99,40 @@ Se toman con semilla fija 20 preguntas de WikiQA test con respuesta, 15 problema
 
 \textbf{Ablaciones.} Multiagente sin Auditor; orquestador de 1.5B en lugar de 7B; y tres modelos de embeddings con distintos valores de k.
 
+\textbf{Pipeline y análisis.} Cuatro scripts (preparación, generación, juez y figuras) se comunican por archivos JSONL con una línea por consulta, así que una corrida interrumpida se reanuda y todas las tablas de este informe se generan desde esos archivos. Como todos los sistemas responden las mismas consultas, las diferencias se analizan de forma pareada: prueba del signo sobre las consultas en que dos sistemas discrepan e intervalo bootstrap del 95\,\% (5\,000 remuestreos) para la diferencia de acierto.
+
 %=====================================================================
 \section{Resultados}
 %=====================================================================
 
 \textbf{Preguntas de los datasets} (Tabla~\ref{tab:principal}, Figura~\ref{fig:tareas}). Con 7B el multiagente y el Naive RAG empatan en acierto global. El Naive RAG es algo más fiel y relevante: sus respuestas son cortas y se apoyan en un único contexto, mientras que el multiagente redacta más afirmaciones a partir de varias fuentes. La razón del empate está en las preguntas: el documento correcto de WikiQA aparece entre los tres primeros recuperados en el 99\,\% de los casos (Anexo~\ref{sec:anexo}) y GSM8K lo resuelve el 7B sin ayuda. El multiagente solo gana en MBPP, donde ejecutar los tests aporta. Sin Auditor el acierto baja en GSM8K y MBPP.
+
+\textbf{¿Son reales las diferencias?} (Tabla~\ref{tab:pares}). En las 50 consultas el multiagente y el Naive RAG discrepan en solo 8: cuatro las acierta cada uno, y el intervalo de la diferencia, de $-0.12$ a $0.10$, contiene el cero. La ventaja del Auditor (3 frente a 1) tampoco es concluyente con esta muestra. Hay dos efectos claros: la descomposición en multisalto (6 frente a 0) y el tamaño del orquestador (14 frente a 0 entre los Naive de 7B y 1.5B).
+
+\begin{table}[t]
+\centering
+\caption{Comparación pareada; 7B salvo que se indique. Solo A y Solo B cuentan las consultas que acierta un sistema y no el otro.}
+\label{tab:pares}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccc}
+\toprule
+A frente a B & n & Solo A & Solo B & Prueba \\
+\midrule
+Multi, Naive & 50 & 4 & 4 & IC $[-0.12, 0.10]$ \\
+Multi, Naive (multisalto) & 15 & 6 & 0 & $p = 0.03$ \\
+Con Auditor, sin Auditor & 50 & 3 & 1 & $p = 0.63$ \\
+Naive 7B, Naive 1.5B & 50 & 14 & 0 & $p < 0.001$ \\
+Multi 1.5B, Naive 1.5B & 50 & 5 & 6 & $p = 1.00$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{¿De dónde sale la brecha de fidelidad?} Por tarea, la Faithfulness del multiagente y la del Naive RAG son iguales en WikiQA (0.91 y 0.92) y la diferencia está en GSM8K (0.83 y 1.00) y MBPP (0.74 y 0.82). En esas tareas la respuesta del multiagente afirma totales calculados con Python o describe el código que escribió, y nada de eso está en los documentos recuperados, así que el juez lo marca como no respaldado aunque sea correcto. La métrica penaliza lo que el sistema calcula, no lo que inventa. Un efecto aparte: el Investigador fue a la web en el 75\,\% de las preguntas de WikiQA aunque el documento correcto ya estaba entre los recuperados, lo que suma latencia y fuentes que pueden contradecir la referencia.
+
+\textbf{Análisis de errores.} El multiagente 7B falla 11 consultas. Siete son de MBPP, y en todas el Auditor encontró el assert que falla y agotó sus dos rechazos sin que el Investigador lograra corregir la función. Tres de WikiQA son respuestas parciales o especulativas frente a la oración de referencia (por ejemplo, responder solo cristianismo cuando la referencia dice cristianismo o islam). La última es una referencia desactualizada: WikiQA da 1.5 mil millones para el Yankee Stadium y la web, 2.3. Siete de las 11 también las falla el Naive RAG, así que son las consultas difíciles del conjunto más que errores propios de la arquitectura.
+
+\textbf{El Auditor como detector.} En MBPP el veredicto del Auditor coincide con el resultado en las 15 consultas: las 8 que aprobó pasan los tests y las 7 que rechazó dos veces fallan. Aunque no siempre logra que el Investigador corrija, su veredicto podría mostrarse al usuario como una advertencia de código no verificado. En GSM8K, en cambio, rechazó en 7 de 15 problemas y solo en uno cambió el resultado frente a no tener Auditor: ahí sobre todo agrega tiempo.
 
 \begin{figure}[t]
 \centering
@@ -116,7 +147,8 @@ Se toman con semilla fija 20 preguntas de WikiQA test con respuesta, 15 problema
 \centering
 \caption{Consultas multisalto (dos documentos y una resta).}
 \label{tab:multisalto}
-\small
+\footnotesize
+\setlength{\tabcolsep}{3pt}
 \begin{tabular}{lcccc}
 \toprule
 Sistema & Acierto & Ambos docs & Seg. & Llam. \\
@@ -143,11 +175,11 @@ Sistema & Acierto & Ambos docs & Seg. & Llam. \\
 %=====================================================================
 \begin{enumerate}
 \item El multiagente supera al Naive RAG cuando la consulta es compuesta (multisalto) o verificable (código); en preguntas de una sola recuperación empatan y el paso único es más barato y algo más fiel.
-\item El Auditor aporta cuando puede comprobar algo objetivo y su retroalimentación es accionable.
+\item El Auditor aporta cuando puede comprobar algo objetivo y su retroalimentación es accionable; en código su veredicto predice el resultado en 15 de 15 casos, aunque no siempre logre corregirlo.
 \item El tamaño del orquestador pesa más que el número de agentes.
 \item Para producción conviene enrutar: Naive RAG por defecto y el grafo completo cuando la consulta pide varios documentos, cálculo o código. La aplicación web del proyecto expone ambos modos con el grafo animado en D3.
 \end{enumerate}
-\textbf{Limitaciones.} Muestras pequeñas (50 y 15 consultas), un solo juez y referencias de WikiQA que a veces difieren de la web actual (el costo del Yankee Stadium). La evaluación necesitó su propia auditoría: el juez inicial generaba preguntas en otro idioma, truncaba la evidencia y extraía afirmaciones del contexto, y el extractor numérico confundía citas con respuestas; todo quedó corregido y registrado.
+\textbf{Limitaciones.} Muestras pequeñas (50 y 15 consultas), con las que solo dos efectos resultan significativos; un solo juez y referencias de WikiQA que a veces difieren de la web actual (el costo del Yankee Stadium). La evaluación necesitó su propia auditoría: el juez inicial generaba preguntas en otro idioma, truncaba la evidencia y extraía afirmaciones del contexto, y el extractor numérico confundía citas con respuestas; todo quedó corregido y registrado.
 
 
 \small
