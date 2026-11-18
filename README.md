@@ -2,7 +2,7 @@
 
 Proyecto final de Procesamiento de Lenguaje Natural, UTEC 2026.
 
-Integrantes: Ricardo Amiel Acuña Villogas, Juan Leibniz Aquino Espinoza y Josué Nehemías Velo Poma.
+Integrantes: Ricardo Acuña, Juan Aquino y Josué Velo.
 
 El enunciado está en ENUNCIADO.md y el esquema de implementación en ESQUEMA.md.
 
@@ -31,9 +31,35 @@ El orquestador es Qwen2.5 7B Instruct cuantizado en 4 bits NF4 (unos 6 GB de VRA
 3. El Auditor mejora matemáticas y código cuando devuelve el error concreto; con un orquestador de 1.5B la arquitectura empeora.
 4. Recomendación de producción: Naive RAG por defecto y el grafo completo para consultas compuestas, cálculos o código.
 
+### Análisis de resultados
+
+Como los cinco sistemas responden las mismas consultas, las diferencias se analizan pregunta por pregunta: solo cuentan las consultas en que un sistema acierta y el otro no.
+
+| Comparación | Consultas | Solo acierta el primero | Solo acierta el segundo | Prueba | Lectura |
+|---|---|---|---|---|---|
+| Multiagente 7B frente a Naive 7B | 50 | 4 | 4 | IC 95 % de la diferencia: −0.12 a 0.10 | Empate |
+| Multiagente 7B frente a Naive 7B | 15 multisalto | 6 | 0 | prueba del signo, p = 0.03 | Gana el multiagente |
+| Con Auditor frente a sin Auditor | 50 | 3 | 1 | p = 0.63 | No concluyente |
+| Naive 7B frente a Naive 1.5B | 50 | 14 | 0 | p < 0.001 | Pesa el modelo |
+
+1. **Fidelidad.** La Faithfulness del multiagente es igual a la del Naive en WikiQA (0.91 y 0.92) y menor en GSM8K (0.83 y 1.00) y MBPP (0.74 y 0.82): ahí la respuesta afirma resultados calculados con Python o describe el código, que no están en los documentos recuperados. La métrica castiga lo que el sistema calcula, no lo que inventa.
+2. **Errores.** El multiagente 7B falla 11 consultas: 7 de MBPP en las que el Auditor encontró el test que falla y agotó sus dos rechazos, 3 respuestas parciales de WikiQA y 1 referencia desactualizada (Yankee Stadium). Siete de las 11 también las falla el Naive.
+3. **El Auditor como detector.** En MBPP las 8 respuestas que aprobó pasan los tests y las 7 que rechazó dos veces fallan. Su veredicto sirve para avisar al usuario que un código no está verificado. En GSM8K rechazó en 7 de 15 problemas y solo cambió un resultado: ahí sobre todo agrega tiempo.
+4. **Costo.** El Investigador consume el 75 % de los 44.6 s por consulta y fue a la web en el 75 % de las preguntas de WikiQA aunque el documento correcto ya estaba en la base.
+
 El detalle está en notebooks/proyecto_final.ipynb y en paper/paper.pdf. PROGRESO.md registra cada decisión y corrección de la corrida, y results/descartado_v1 conserva los resultados descartados.
 
-## Flujo completo
+## Procesamiento de datos
+
+| Fuente | Transformación | Documentos en el índice | Consultas de prueba |
+|---|---|---|---|
+| WikiQA (pares pregunta y oración candidata) | Las oraciones se agrupan por título del artículo, sin duplicados y en su orden | 2 811, mediana 1 065 caracteres | 20 preguntas de test con respuesta |
+| GSM8K (problemas con solución) | Problem y Worked solution de train; la respuesta oro es el número tras ####, sin comas | 7 473, mediana 511 | 15 de test, fuera del índice |
+| MBPP (enunciado, función y 3 asserts) | Task y Solution de train, validation y prompt; tests y setup se guardan aparte para el Auditor | 474, mediana 240 | 15 de test con sus asserts |
+
+Los documentos son cortos y se indexan enteros, sin trocear. Los embeddings de all MiniLM L6 se normalizan y van a un índice FAISS de producto interno, que equivale al coseno; la aplicación web usa los mismos vectores cuantizados a int8. Las consultas se eligen con semilla 42 y las 15 multisalto tienen el año verificado en el texto de cada artículo. PREGUNTAS.md describe con más detalle qué contiene cada fuente.
+
+## Pipeline de evaluación
 
 | Paso | Script | Salida | Checkpoint |
 |---|---|---|---|
@@ -46,6 +72,10 @@ El detalle está en notebooks/proyecto_final.ipynb y en paper/paper.pdf. PROGRES
 run_all.sh ejecuta los cinco pasos en orden de prioridad: primero Naive frente a multiagente con 7B, luego el juez, después la ablación con 1.5B.
 
 Los sistemas evaluados son naive_7b, multi_7b, multi_sin_auditor_7b, naive_1.5b y multi_1.5b.
+
+1. El juez es Phi 4, de otra familia que el orquestador, para que el sistema no se califique a sí mismo. Faithfulness se calcula en dos pasos como en RAGAS: extraer afirmaciones y verificar cada una contra el contexto.
+2. Hay métricas que no dependen del juez: número exacto en GSM8K, tests ejecutados en MBPP y documento oro recuperado en WikiQA.
+3. Antes de reportar se auditó la propia evaluación: el juez generaba preguntas en otro idioma, el extractor leía la cita [1] como respuesta y el parser convertía un turno sin Action en una acción inválida. Las correcciones están en PROGRESO.md y los resultados descartados en results/descartado_v1.
 
 ## Estructura del código
 
@@ -137,7 +167,12 @@ La carpeta presentacion/ tiene la exposición con la plantilla y la paleta de UT
 2. Presentacion_Auditor_ReAct_sin_pasos.pptx: una diapositiva por escena, útil para editar o imprimir.
 3. Presentacion_Auditor_ReAct.html: un solo archivo con transiciones y revelado por pasos. Se avanza con las flechas o con clic, N muestra el guion y F activa la pantalla completa.
 
-Para regenerarla: npm install y luego npm run build dentro de presentacion/generador.
+Hay dos versiones generadas del mismo contenido:
+
+1. Completa, 30 escenas (unos 25 minutos): incluye herramientas, modelos, validación del evaluador, ablaciones, fidelidad por tarea, latencia y casos de uso. Sirve como respaldo para responder preguntas.
+2. Corta, 16 escenas (unos 15 minutos), en los archivos con el sufijo _corta: problema, arquitectura, ciclo ReAct, procesamiento de datos, Auditor, diseño y pipeline de evaluación, resultado principal con las métricas RAGAS, multisalto, significancia, análisis de errores, demo y conclusiones.
+
+Para regenerarlas: npm install y luego npm run build dentro de presentacion/generador.
 
 ## Publicar en GitHub Pages
 
