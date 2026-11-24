@@ -78,7 +78,7 @@ The orchestrator is Qwen2.5 7B Instruct \citep{qwen2025} in NF4 with double quan
 With a fixed seed we sample 20 WikiQA test questions that have a correct sentence, 15 GSM8K test problems and 15 MBPP test tasks with their three asserts in the prompt; the GSM8K and MBPP queries are not in the index. To test the case that motivates the architecture we add 15 multi hop queries that ask for the years elapsed between two events described in two different WikiQA articles, with each year verified in the article text. The five systems are the multi agent graph, the graph without the Auditor and Naive RAG with the 7B orchestrator, and the multi agent graph and Naive RAG with Qwen2.5 1.5B.
 
 \paragraph{Metrics.}
-Following RAGAS \citep{es2024ragas}, Faithfulness is the fraction of atomic claims in the answer that the judge can infer from the context the system retrieved, computed in two steps (extract the claims, then verify each one). Answer Relevance is the mean cosine similarity between the question $q$ and three questions $\hat q_i$ the judge generates from the answer,
+We implement the metric definitions of RAGAS \citep{es2024ragas} directly with our own judge prompts instead of the ragas library, so that the judge model and its prompts stay under our control. Faithfulness is the fraction of atomic claims in the answer that the judge can infer from the context the system retrieved, computed in two steps (extract the claims, then verify each one). Answer Relevance is the mean cosine similarity between the question $q$ and three questions $\hat q_i$ the judge generates from the answer,
 \begin{equation}
 \mathrm{AR} = \frac{1}{3}\sum_{i=1}^{3} \cos\big(e(q),\, e(\hat q_i)\big).
 \end{equation}
