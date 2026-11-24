@@ -3,13 +3,13 @@
 \caption{The 50 complex queries: each needs two documents and one subtraction. Faithfulness and Answer Relevance from the judge.}
 \label{tab:multihop}
 \small
-\begin{tabular}{lcccc}
+\begin{tabular}{lcccccc}
 \toprule
-System & Accuracy & Both docs & Seconds & LLM calls \\
+System & Accuracy & Faithful. & Answer Rel. & Both docs & Seconds & LLM calls \\
 \midrule
-Multi agent 7B & 0.88 & 0.76 & 31.4 & 9.1 \\
-Naive RAG 7B & 0.28 & 0.10 & 3.0 & 1.0 \\
-Multi agent, no Auditor 7B & 0.84 & 0.76 & 23.0 & 5.8 \\
+Multi agent 7B & 0.88 & 0.30 & 0.21 & 0.76 & 31.4 & 9.1 \\
+Naive RAG 7B & 0.28 & 0.77 & 0.68 & 0.10 & 3.0 & 1.0 \\
+Multi agent, no Auditor 7B & 0.84 & 0.28 & 0.21 & 0.76 & 23.0 & 5.8 \\
 \bottomrule
 \end{tabular}
 \end{table}

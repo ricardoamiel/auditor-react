@@ -20,11 +20,11 @@ El orquestador es Qwen2.5 7B Instruct cuantizado en 4 bits NF4 (unos 6 GB de VRA
 
 Consultas complejas: 50 preguntas que piden los años entre dos eventos descritos en dos artículos distintos, así que exigen dos búsquedas y una resta.
 
-| Sistema | Acierto | Ambos documentos recuperados | Segundos | Llamadas al LLM |
-|---|---|---|---|---|
-| Multiagente 7B | 0.88 | 0.76 | 31.4 | 9.1 |
-| Naive RAG 7B | 0.28 | 0.10 | 3.0 | 1.0 |
-| Multiagente sin Auditor 7B | 0.84 | 0.76 | 23.0 | 5.8 |
+| Sistema | Acierto | Faithfulness | Answer Relevance | Ambos documentos recuperados | Segundos | Llamadas al LLM |
+|---|---|---|---|---|---|---|
+| Multiagente 7B | 0.88 | 0.30 | 0.21 | 0.76 | 31.4 | 9.1 |
+| Naive RAG 7B | 0.28 | 0.77 | 0.68 | 0.10 | 3.0 | 1.0 |
+| Multiagente sin Auditor 7B | 0.84 | 0.28 | 0.21 | 0.76 | 23.0 | 5.8 |
 
 Consultas de los datasets (control): 20 de WikiQA, 15 de GSM8K y 15 de MBPP, que casi siempre se resuelven con una sola recuperación.
 
@@ -37,9 +37,10 @@ Consultas de los datasets (control): 20 de WikiQA, 15 de GSM8K y 15 de MBPP, que
 | Naive RAG 1.5B | 0.78 | 0.64 | 0.50 | 3.8 |
 
 1. En las consultas complejas el multiagente supera con claridad al Naive RAG: 0.88 frente a 0.28. Busca cada evento por separado y recupera ambos documentos en el 76 % de los casos, contra el 10 % de una sola búsqueda.
-2. En las preguntas de los datasets empatan en acierto y el Naive es algo más fiel; el multiagente gana en código (MBPP), donde ejecuta y verifica los tests.
-3. El Auditor ayuda cuando puede comprobar algo concreto y devuelve el error; con un orquestador de 1.5B la arquitectura empeora.
-4. Recomendación de producción: Naive RAG por defecto y el grafo completo para consultas compuestas, cálculos o código.
+2. En esas mismas consultas Faithfulness y Answer Relevance favorecen al Naive RAG aunque acierta mucho menos. El multiagente responde solo "Final answer: 41": el juez no encuentra la resta escrita en los documentos y, a partir de un número suelto, genera preguntas que no se parecen a la original. El Naive responde frases sobre su contexto, muchas veces para decir que no puede calcularlo. Estas métricas miden respaldo y tema, no corrección; en respuestas numéricas manda el acierto exacto.
+3. En las preguntas de los datasets empatan en acierto y el Naive es algo más fiel; el multiagente gana en código (MBPP), donde ejecuta y verifica los tests.
+4. El Auditor ayuda cuando puede comprobar algo concreto y devuelve el error; con un orquestador de 1.5B la arquitectura empeora.
+5. Recomendación de producción: Naive RAG por defecto y el grafo completo para consultas compuestas, cálculos o código.
 
 ### Análisis de resultados
 
@@ -186,5 +187,5 @@ La carpeta presentacion/ tiene la exposición con la plantilla y la paleta de UT
 
 Hay dos versiones generadas del mismo contenido:
 
-1. Completa, 30 escenas (unos 25 minutos): incluye herramientas, modelos, validación del evaluador, ablaciones, fidelidad por tarea, latencia y casos de uso. Sirve como respaldo para responder preguntas.
-2. Corta, 16 escenas (unos 15 minutos), en los archivos con el sufijo _corta: problema, arquitectura, ciclo ReAct, procesamiento de datos, Auditor, diseño y pipeline de evaluación, resultado principal con las métricas RAGAS, multisalto, significancia, análisis de errores, demo y conclusiones.
+1. Completa, 31 escenas (unos 25 minutos): incluye herramientas, modelos, validación del evaluador, ablaciones, fidelidad por tarea, latencia y casos de uso. Sirve como respaldo para responder preguntas.
+2. Corta, 17 escenas (unos 15 minutos), en los archivos con el sufijo _corta: problema, arquitectura, ciclo ReAct, procesamiento de datos, Auditor, diseño y pipeline de evaluación, resultado principal en las 50 consultas complejas, métricas RAGAS, control con las preguntas de los datasets, significancia, análisis de errores, demo y conclusiones.
