@@ -15,21 +15,27 @@ __pycache__/
 .env
 
 # LaTeX
-paper/*.aux
-paper/*.log
-paper/*.out
-paper/*.fls
-paper/*.fdb_latexmk
-paper/*.synctex.gz
-paper/*.bbl
-paper/*.blg
+report/*.aux
+report/*.log
+report/*.out
+report/*.fls
+report/*.fdb_latexmk
+report/*.synctex.gz
+report/*.bbl
+report/*.blg
 
 # SLURM
 slurm/logs/*.out
 slurm/logs/*.err
 
-# generador de la presentación
-presentacion/generador/node_modules/
+# Material de trabajo que no forma parte de la entrega: bitácora de la corrida en Khipu,
+# esquema de planificación, generador de la presentación y resultados descartados
+PROGRESO.md
+ESQUEMA.md
+presentacion/generador/
+presentacion/assets/
+results/descartado_v1/*
+!results/descartado_v1/codigo_auditor_v1/
 
 # Datos, índices y logs: se regeneran con codes/prepare_data.py y los scripts
 /data/

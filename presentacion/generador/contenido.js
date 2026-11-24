@@ -2,7 +2,7 @@
 // Coordenadas en pulgadas sobre un lienzo de 13,333 x 7,5 (16:9).
 // step: 0 = visible al entrar; 1, 2, 3... = aparece con cada clic (en PPTX es una diapositiva más).
 // Paleta UTEC: celeste y negro; verde = mejora, rojo = falla; amarillo solo para resaltar barras.
-// Los números salen de results/ y paper/tablas/ (evaluación en Khipu, noviembre 2026).
+// Los números salen de results/ y report/tables/ (evaluación en Khipu, noviembre 2026).
 
 const C = {
   cy: "00BFFF",   // celeste UTEC
@@ -266,12 +266,12 @@ S.push({
     A(6.5, 3.6, 6.8, 3.6, { step: 2 }),
     ...etapa(3, "judge.py", "Phi 4: Faithfulness en dos pasos, Answer Relevance y corrección en WikiQA", "juez_*.jsonl", 6.84, 2),
     A(9.62, 3.6, 9.92, 3.6, { step: 3 }),
-    ...etapa(4, "figures.py", "Tabla comparativa, 8 figuras y las tablas del paper, siempre desde los JSONL", "tabla_comparativa.csv · figures/", 9.96, 3),
+    ...etapa(4, "figures.py", "Tabla comparativa, 8 figuras y las tablas del reporte, siempre desde los JSONL", "tabla_comparativa.csv · figures/", 9.96, 3),
     ...card(0.6, 4.95, 3.9, 1.5, null, "Juez de otra familia", "Phi 4 califica a Qwen: el sistema no se evalúa a sí mismo", { step: 4, ts: 16, bs: 14 }),
     ...card(4.72, 4.95, 3.9, 1.5, null, "Métricas sin juez", "Número exacto, tests ejecutados y documento oro recuperado", { step: 4, ts: 16, bs: 14 }),
     ...card(8.84, 4.95, 3.9, 1.5, null, "Checkpoints", "Un corte del job en SLURM no pierde ninguna consulta", { step: 4, ts: 16, bs: 14 }),
   ],
-  notes: "El pipeline tiene cuatro etapas que se comunican solo por archivos. prepare_data arma el corpus, elige las consultas y construye el índice. run_eval corre los cinco sistemas y guarda respuesta, traza, tiempos y la métrica objetiva de cada consulta. judge usa Phi 4 para Faithfulness, que primero extrae afirmaciones y luego verifica cada una, y para Answer Relevance. figures genera la tabla, las figuras y las tablas del paper directamente desde esos archivos, así ningún número se copia a mano. Tres garantías: el juez es de otra familia, hay métricas que no dependen del juez y todo se reanuda desde el último checkpoint.",
+  notes: "El pipeline tiene cuatro etapas que se comunican solo por archivos. prepare_data arma el corpus, elige las consultas y construye el índice. run_eval corre los cinco sistemas y guarda respuesta, traza, tiempos y la métrica objetiva de cada consulta. judge usa Phi 4 para Faithfulness, que primero extrae afirmaciones y luego verifica cada una, y para Answer Relevance. figures genera la tabla, las figuras y las tablas del reporte directamente desde esos archivos, así ningún número se copia a mano. Tres garantías: el juez es de otra familia, hay métricas que no dependen del juez y todo se reanuda desde el último checkpoint.",
 });
 
 S.push({
@@ -283,7 +283,7 @@ S.push({
     ...malBien(4.25, 1.0, "**Parser**: un turno sin Action se volvía una acción inválida", "Un turno sin Action cuenta como reporte final", 2),
     big("Validar el evaluador es tan importante como validar el sistema", { step: 3, y: 5.55 }),
   ],
-  notes: "Antes de mirar resultados auditamos la propia evaluación. El juez generaba preguntas en español y castigaba la relevancia; lo pasamos a inglés y separamos la extracción de afirmaciones de su verificación. El extractor de números tomaba la cita entre corchetes como respuesta, lo que escondía un 1.00 en GSM8K. Y el parser convertía un turno sin acción en una acción inválida. Todo está registrado en PROGRESO.md y los resultados descartados se conservan.",
+  notes: "Antes de mirar resultados auditamos la propia evaluación. El juez generaba preguntas en español y castigaba la relevancia; lo pasamos a inglés y separamos la extracción de afirmaciones de su verificación. El extractor de números tomaba la cita entre corchetes como respuesta, lo que escondía un 1.00 en GSM8K. Y el parser convertía un turno sin acción en una acción inválida. Todo se corrigió antes de las corridas finales.",
 });
 
 S.push({
@@ -522,7 +522,7 @@ S.push({
     ]),
     B("", 7.85, 5.3, 4.85, 0.85, { fill: C.ink, radius: 0.1, step: 3, anim: "pop" }),
     T("ricardoamiel.github.io/auditor-react", 7.9, 5.3, 4.75, 0.85, { size: 17, bold: true, color: C.wh, align: "center", link: UI, step: 3 }),
-    T("Código, notebook y paper: github.com/ricardoamiel/auditor-react", 0.6, 6.25, 12.1, 0.45, { size: 15, align: "center", link: REPO, step: 3 }),
+    T("Código, notebook y reporte: github.com/ricardoamiel/auditor-react", 0.6, 6.25, 12.1, 0.45, { size: 15, align: "center", link: REPO, step: 3 }),
   ],
   notes: "La aplicación está publicada en GitHub Pages. Puede correr el modelo de 1.5B directamente en el navegador con WebGPU, o conectarse a un servidor con el 7B. Mientras responde, el grafo resalta el agente activo, la línea de tiempo muestra cuánto tarda cada paso y se listan los documentos recuperados. Aquí hacemos la demo en vivo con una pregunta de código y una multisalto.",
 });

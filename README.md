@@ -4,7 +4,7 @@ Proyecto final de Procesamiento de Lenguaje Natural, UTEC 2026.
 
 Integrantes: Ricardo Acuña, Juan Aquino y Josué Velo.
 
-El enunciado está en ENUNCIADO.md y el esquema de implementación en ESQUEMA.md.
+El enunciado está en ENUNCIADO.md y el reporte técnico, en inglés, en report/main.pdf.
 
 ## Qué es
 
@@ -47,7 +47,7 @@ Como los cinco sistemas responden las mismas consultas, las diferencias se anali
 3. **El Auditor como detector.** En MBPP las 8 respuestas que aprobó pasan los tests y las 7 que rechazó dos veces fallan. Su veredicto sirve para avisar al usuario que un código no está verificado. En GSM8K rechazó en 7 de 15 problemas y solo cambió un resultado: ahí sobre todo agrega tiempo.
 4. **Costo.** El Investigador consume el 75 % de los 44.6 s por consulta y fue a la web en el 75 % de las preguntas de WikiQA aunque el documento correcto ya estaba en la base.
 
-El detalle está en notebooks/proyecto_final.ipynb y en paper/paper.pdf. PROGRESO.md registra cada decisión y corrección de la corrida, y results/descartado_v1 conserva los resultados descartados.
+El detalle está en notebooks/proyecto_final.ipynb y en el reporte técnico, report/main.pdf.
 
 ## Procesamiento de datos
 
@@ -68,6 +68,7 @@ Los documentos son cortos y se indexan enteros, sin trocear. Los embeddings de a
 | 3. Juez | codes/judge.py | results/juez_SISTEMA.jsonl | una línea por respuesta; retoma donde quedó |
 | 4. Índice web | codes/export_web.py | app/data/kb.json | no aplica |
 | 5. Notebook | notebooks/proyecto_final.ipynb | figures/*.pdf, figures/*.svg, results/tabla_comparativa.csv, app/data/resultados.json | no aplica |
+| 6. Reporte | codes/report_assets.py y luego pdflatex y bibtex en report/ | report/tables/*.tex, report/figures/*.pdf, report/main.pdf | no aplica |
 
 run_all.sh ejecuta los cinco pasos en orden de prioridad: primero Naive frente a multiagente con 7B, luego el juez, después la ablación con 1.5B.
 
@@ -75,7 +76,7 @@ Los sistemas evaluados son naive_7b, multi_7b, multi_sin_auditor_7b, naive_1.5b 
 
 1. El juez es Phi 4, de otra familia que el orquestador, para que el sistema no se califique a sí mismo. Faithfulness se calcula en dos pasos como en RAGAS: extraer afirmaciones y verificar cada una contra el contexto.
 2. Hay métricas que no dependen del juez: número exacto en GSM8K, tests ejecutados en MBPP y documento oro recuperado en WikiQA.
-3. Antes de reportar se auditó la propia evaluación: el juez generaba preguntas en otro idioma, el extractor leía la cita [1] como respuesta y el parser convertía un turno sin Action en una acción inválida. Las correcciones están en PROGRESO.md y los resultados descartados en results/descartado_v1.
+3. Antes de reportar se auditó la propia evaluación: el juez generaba preguntas en otro idioma, el extractor leía la cita [1] como respuesta y el parser convertía un turno sin Action en una acción inválida.
 
 ## Estructura del código
 
@@ -91,7 +92,7 @@ Los sistemas evaluados son naive_7b, multi_7b, multi_sin_auditor_7b, naive_1.5b 
 | codes/judge.py | Faithfulness, Answer Relevance y corrección en WikiQA con el juez. |
 | codes/figures.py | Carga de resultados, tabla comparativa y las 8 figuras vectoriales. |
 | codes/multihop.py | Construye las 15 consultas multisalto con el año verificado en cada documento. |
-| codes/tablas_tex.py | Genera las tablas del paper desde los resultados. |
+| codes/report_assets.py | Genera en inglés las tablas, la comparación pareada y las figuras del reporte técnico desde los resultados. |
 | codes/export_web.py | Exporta textos y embeddings en int8 para la aplicación web. |
 | app/index.html, style.css, main.js | Interfaz: chat, grafo animado, línea de tiempo y evidencia con D3 v7. |
 | app/agent.js | El mismo grafo y los mismos prompts en JavaScript, para correr en el navegador. |
@@ -99,7 +100,7 @@ Los sistemas evaluados son naive_7b, multi_7b, multi_sin_auditor_7b, naive_1.5b 
 | app/server.py | API en FastAPI que ejecuta el grafo en Python y transmite cada evento a la página. |
 | notebooks/servidor_colab.ipynb | Levanta en Colab el servidor del 7B con un túnel público y devuelve el enlace a la aplicación. |
 | PREGUNTAS.md | Contenido de cada fuente de la base de conocimiento y banco de preguntas para probar el sistema. |
-| presentacion/generador/contenido.js, render.js | Contenido de la exposición y generador de los PPTX y del HTML animado. |
+| report/main.tex | Reporte técnico en el formato NeurIPS, en inglés. |
 | slurm/*.sh | Jobs de Khipu (preparación, prueba corta y pipeline completo) y la sincronización de checkpoints. |
 | run_all.sh, setup_aws.sh, make_bundle.sh | Pipeline completo, arranque en una instancia en la nube y empaquetado para traspaso. |
 
@@ -123,7 +124,7 @@ Espacio en la instancia: unos 48 GB de modelos en la caché de Hugging Face (Qwe
 
 ## Aplicación web
 
-Se publica con GitHub Pages desde app/. Tiene dos motores:
+Está publicada en https://ricardoamiel.github.io/auditor-react/ y su código está en app/. Tiene dos motores:
 
 1. **Navegador:** Qwen2.5 1.5B corre con WebGPU en Chrome o Edge, los embeddings con transformers.js y el código Python con Pyodide. No necesita servidor.
 2. **Servidor:** python app/server.py en una máquina con GPU, y la página se conecta a http://localhost:8000. Para un servidor remoto se abre un túnel con ssh -L 8000:localhost:8000 usuario@instancia.
@@ -161,7 +162,7 @@ PREGUNTAS.md describe qué contiene cada parte de la base de conocimiento y trae
 
 ## Presentación
 
-La carpeta presentacion/ tiene la exposición con la plantilla y la paleta de UTEC: hallazgos, implementación, casos de uso y el enlace a la aplicación. Todo sale de un solo archivo, presentacion/generador/contenido.js, que también guarda el guion de cada diapositiva como notas del orador.
+La carpeta presentacion/ tiene la exposición con la plantilla y la paleta de UTEC: hallazgos, implementación, casos de uso y el enlace a la aplicación. Cada diapositiva trae su guion en las notas del orador.
 
 1. Presentacion_Auditor_ReAct.pptx: cada clic de animación es una diapositiva más, para que los pasos se vean igual en PowerPoint, Google Slides o LibreOffice.
 2. Presentacion_Auditor_ReAct_sin_pasos.pptx: una diapositiva por escena, útil para editar o imprimir.
@@ -171,21 +172,3 @@ Hay dos versiones generadas del mismo contenido:
 
 1. Completa, 30 escenas (unos 25 minutos): incluye herramientas, modelos, validación del evaluador, ablaciones, fidelidad por tarea, latencia y casos de uso. Sirve como respaldo para responder preguntas.
 2. Corta, 16 escenas (unos 15 minutos), en los archivos con el sufijo _corta: problema, arquitectura, ciclo ReAct, procesamiento de datos, Auditor, diseño y pipeline de evaluación, resultado principal con las métricas RAGAS, multisalto, significancia, análisis de errores, demo y conclusiones.
-
-Para regenerarlas: npm install y luego npm run build dentro de presentacion/generador.
-
-## Publicar en GitHub Pages
-
-1. Crear en github.com/new un repositorio público vacío llamado auditor-react.
-2. Desde esta carpeta:
-
-```
-git init -b main
-git add .
-git commit -m "Proyecto final: sistema multiagente ReAct"
-git remote add origin https://github.com/ricardoamiel/auditor-react.git
-git push -u origin main
-```
-
-3. En el repositorio: Settings, Pages, Source: GitHub Actions. El workflow .github/workflows/pages.yml publica la carpeta app/ en cada push.
-4. La aplicación queda en https://ricardoamiel.github.io/auditor-react/ y el notebook se puede abrir en Colab desde el mismo repositorio.
