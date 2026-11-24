@@ -5,7 +5,7 @@
 #SBATCH --mem=48G
 #SBATCH --time=04:00:00
 #SBATCH --output=slurm/logs/%x_%j.out
-# Experimento multisalto (15 consultas que exigen dos documentos y un cálculo) y ejecución final del notebook
+# Experimento multisalto (50 consultas que exigen dos documentos y un cálculo) y ejecución final del notebook
 module load cuda/12.8 miniconda/3.0 >/dev/null 2>&1
 export HF_HUB_OFFLINE=1 HF_DATASETS_OFFLINE=1 TOKENIZERS_PARALLELISM=false
 PY=~/.conda/envs/nlp-p1/bin/python

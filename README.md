@@ -14,21 +14,31 @@ Un sistema de tres agentes que resuelve consultas que un solo paso de RAG suele 
 2. **Auditor de Hechos.** Revisa el reporte. Lo rechaza si no se apoya en ninguna herramienta, si el código no pasa los tests o si el LLM detecta datos que no aparecen en las observaciones. Al rechazar, devuelve el flujo al Investigador con el motivo, hasta 2 veces.
 3. **Redactor.** Escribe la respuesta final citando los documentos.
 
-El orquestador es Qwen2.5 7B Instruct cuantizado en 4 bits NF4 (unos 6 GB de VRAM). Se compara contra un Naive RAG de un solo paso en 50 consultas, con Faithfulness y Answer Relevance según RAGAS, usando Phi 4 como juez, más métricas objetivas por tarea.
+El orquestador es Qwen2.5 7B Instruct cuantizado en 4 bits NF4 (unos 6 GB de VRAM). Se compara contra un Naive RAG de un solo paso en 50 consultas complejas (dos documentos y un cálculo) y en 50 consultas de los datasets como control, con Faithfulness y Answer Relevance según RAGAS, usando Phi 4 como juez, más métricas objetivas por tarea.
 
 ## Resultados principales
 
-| Sistema | Faithfulness | Answer Relevance | Acierto (50 consultas) | Acierto multisalto (15) | Segundos |
-|---|---|---|---|---|---|
-| Multiagente 7B | 0.84 | 0.68 | 0.78 | 0.93 | 44.6 |
-| Naive RAG 7B | 0.91 | 0.72 | 0.78 | 0.53 | 4.8 |
-| Multiagente sin Auditor 7B | 0.84 | 0.68 | 0.74 | 0.93 | 38.6 |
-| Multiagente 1.5B | 0.47 | 0.44 | 0.48 | no evaluado | 49.4 |
-| Naive RAG 1.5B | 0.78 | 0.64 | 0.50 | no evaluado | 3.8 |
+Consultas complejas: 50 preguntas que piden los años entre dos eventos descritos en dos artículos distintos, así que exigen dos búsquedas y una resta.
 
-1. En las preguntas originales de los datasets, que se resuelven con una sola recuperación, el multiagente empata con el Naive RAG en acierto y es algo menos fiel; gana en código (MBPP), donde ejecuta y verifica los tests.
-2. En consultas multisalto, que exigen dos documentos y un cálculo, el multiagente casi duplica el acierto del Naive RAG.
-3. El Auditor mejora matemáticas y código cuando devuelve el error concreto; con un orquestador de 1.5B la arquitectura empeora.
+| Sistema | Acierto | Ambos documentos recuperados | Segundos | Llamadas al LLM |
+|---|---|---|---|---|
+| Multiagente 7B | 0.88 | 0.76 | 31.4 | 9.1 |
+| Naive RAG 7B | 0.28 | 0.10 | 3.0 | 1.0 |
+| Multiagente sin Auditor 7B | 0.84 | 0.76 | 23.0 | 5.8 |
+
+Consultas de los datasets (control): 20 de WikiQA, 15 de GSM8K y 15 de MBPP, que casi siempre se resuelven con una sola recuperación.
+
+| Sistema | Faithfulness | Answer Relevance | Acierto | Segundos |
+|---|---|---|---|---|
+| Multiagente 7B | 0.84 | 0.68 | 0.78 | 44.6 |
+| Naive RAG 7B | 0.91 | 0.72 | 0.78 | 4.8 |
+| Multiagente sin Auditor 7B | 0.84 | 0.68 | 0.74 | 38.6 |
+| Multiagente 1.5B | 0.47 | 0.44 | 0.48 | 49.4 |
+| Naive RAG 1.5B | 0.78 | 0.64 | 0.50 | 3.8 |
+
+1. En las consultas complejas el multiagente supera con claridad al Naive RAG: 0.88 frente a 0.28. Busca cada evento por separado y recupera ambos documentos en el 76 % de los casos, contra el 10 % de una sola búsqueda.
+2. En las preguntas de los datasets empatan en acierto y el Naive es algo más fiel; el multiagente gana en código (MBPP), donde ejecuta y verifica los tests.
+3. El Auditor ayuda cuando puede comprobar algo concreto y devuelve el error; con un orquestador de 1.5B la arquitectura empeora.
 4. Recomendación de producción: Naive RAG por defecto y el grafo completo para consultas compuestas, cálculos o código.
 
 ### Análisis de resultados
@@ -37,13 +47,14 @@ Como los cinco sistemas responden las mismas consultas, las diferencias se anali
 
 | Comparación | Consultas | Solo acierta el primero | Solo acierta el segundo | Prueba | Lectura |
 |---|---|---|---|---|---|
-| Multiagente 7B frente a Naive 7B | 50 | 4 | 4 | IC 95 % de la diferencia: −0.12 a 0.10 | Empate |
-| Multiagente 7B frente a Naive 7B | 15 multisalto | 6 | 0 | prueba del signo, p = 0.03 | Gana el multiagente |
-| Con Auditor frente a sin Auditor | 50 | 3 | 1 | p = 0.63 | No concluyente |
+| Multiagente 7B frente a Naive 7B | 50 complejas | 30 | 0 | prueba del signo, p < 0.001 | Gana el multiagente |
+| Con Auditor frente a sin Auditor | 50 complejas | 2 | 0 | p = 0.50 | No concluyente |
+| Multiagente 7B frente a Naive 7B | 50 de datasets | 4 | 4 | IC 95 % de la diferencia: −0.12 a 0.10 | Empate |
+| Con Auditor frente a sin Auditor | 50 de datasets | 3 | 1 | p = 0.63 | No concluyente |
 | Naive 7B frente a Naive 1.5B | 50 | 14 | 0 | p < 0.001 | Pesa el modelo |
 
 1. **Fidelidad.** La Faithfulness del multiagente es igual a la del Naive en WikiQA (0.91 y 0.92) y menor en GSM8K (0.83 y 1.00) y MBPP (0.74 y 0.82): ahí la respuesta afirma resultados calculados con Python o describe el código, que no están en los documentos recuperados. La métrica castiga lo que el sistema calcula, no lo que inventa.
-2. **Errores.** El multiagente 7B falla 11 consultas: 7 de MBPP en las que el Auditor encontró el test que falla y agotó sus dos rechazos, 3 respuestas parciales de WikiQA y 1 referencia desactualizada (Yankee Stadium). Siete de las 11 también las falla el Naive.
+2. **Errores.** En las complejas el multiagente falla 6 de 50: cuatro con ambos documentos (dos por un año de diferencia y dos por tomar otro año del artículo) y dos en que no recuperó uno de los artículos. El Auditor rechazó las seis al menos una vez, pero no rehace la resta. En las de datasets falla 11: 7 de MBPP en las que el Auditor encontró el test que falla y agotó sus dos rechazos, 3 respuestas parciales de WikiQA y 1 referencia desactualizada (Yankee Stadium). Siete de las 11 también las falla el Naive.
 3. **El Auditor como detector.** En MBPP las 8 respuestas que aprobó pasan los tests y las 7 que rechazó dos veces fallan. Su veredicto sirve para avisar al usuario que un código no está verificado. En GSM8K rechazó en 7 de 15 problemas y solo cambió un resultado: ahí sobre todo agrega tiempo.
 4. **Costo.** El Investigador consume el 75 % de los 44.6 s por consulta y fue a la web en el 75 % de las preguntas de WikiQA aunque el documento correcto ya estaba en la base.
 
@@ -57,7 +68,7 @@ El detalle está en notebooks/proyecto_final.ipynb y en el reporte técnico, rep
 | GSM8K (problemas con solución) | Problem y Worked solution de train; la respuesta oro es el número tras ####, sin comas | 7 473, mediana 511 | 15 de test, fuera del índice |
 | MBPP (enunciado, función y 3 asserts) | Task y Solution de train, validation y prompt; tests y setup se guardan aparte para el Auditor | 474, mediana 240 | 15 de test con sus asserts |
 
-Los documentos son cortos y se indexan enteros, sin trocear. Los embeddings de all MiniLM L6 se normalizan y van a un índice FAISS de producto interno, que equivale al coseno; la aplicación web usa los mismos vectores cuantizados a int8. Las consultas se eligen con semilla 42 y las 15 multisalto tienen el año verificado en el texto de cada artículo. PREGUNTAS.md describe con más detalle qué contiene cada fuente.
+Los documentos son cortos y se indexan enteros, sin trocear. Los embeddings de all MiniLM L6 se normalizan y van a un índice FAISS de producto interno, que equivale al coseno; la aplicación web usa los mismos vectores cuantizados a int8. Las consultas se eligen con semilla 42. De las 50 complejas, 15 se eligieron a mano y 35 salen de artículos cuyo primer párrafo da un solo año para la propia entidad, emparejados con semilla fija; los 100 artículos son distintos y cada año se verifica en el texto. PREGUNTAS.md describe con más detalle qué contiene cada fuente.
 
 ## Pipeline de evaluación
 
@@ -91,7 +102,7 @@ Los sistemas evaluados son naive_7b, multi_7b, multi_sin_auditor_7b, naive_1.5b 
 | codes/run_eval.py | Corre cada sistema sobre las consultas, mide tiempo por nodo y calcula exactitud en GSM8K, tests aprobados en MBPP y recuperación del documento correcto en WikiQA. |
 | codes/judge.py | Faithfulness, Answer Relevance y corrección en WikiQA con el juez. |
 | codes/figures.py | Carga de resultados, tabla comparativa y las 8 figuras vectoriales. |
-| codes/multihop.py | Construye las 15 consultas multisalto con el año verificado en cada documento. |
+| codes/multihop.py | Construye las 50 consultas complejas (multisalto) con el año verificado en cada documento. |
 | codes/report_assets.py | Genera en inglés las tablas, la comparación pareada y las figuras del reporte técnico desde los resultados. |
 | codes/export_web.py | Exporta textos y embeddings en int8 para la aplicación web. |
 | app/index.html, style.css, main.js | Interfaz: chat, grafo animado, línea de tiempo y evidencia con D3 v7. |

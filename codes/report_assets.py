@@ -55,14 +55,17 @@ rng = random.Random(0)
 dif = (P["multi_7b"] - P["naive_7b"]).tolist()
 boot = sorted(sum(rng.choice(dif) for _ in dif) / len(dif) for _ in range(5000))
 filas = []
-for etiqueta, a, b in [("Multi agent vs Naive RAG", "multi_7b", "naive_7b"), ("Auditor vs no Auditor", "multi_7b", "multi_sin_auditor_7b"),
+for etiqueta, a, b in [("Multi agent vs Naive RAG, dataset", "multi_7b", "naive_7b"), ("Auditor vs no Auditor, dataset", "multi_7b", "multi_sin_auditor_7b"),
                        ("Naive RAG 7B vs 1.5B", "naive_7b", "naive_1.5b"), ("Multi agent 1.5B vs Naive RAG 1.5B", "multi_1.5b", "naive_1.5b")]:
     sa, sb = int(((P[a] == 1) & (P[b] == 0)).sum()), int(((P[a] == 0) & (P[b] == 1)).sum())
     filas.append([etiqueta, 50, sa, sb, texto_p(signo(sa, sb))])
 sa = sum(mh["multi_7b"][i] and not mh["naive_7b"][i] for i in mh["multi_7b"])
 sb = sum(mh["naive_7b"][i] and not mh["multi_7b"][i] for i in mh["multi_7b"])
-filas.insert(1, ["Multi agent vs Naive RAG, multi hop", 15, sa, sb, texto_p(signo(sa, sb))])
-filas[0][4] += f", CI $[{boot[125]:.2f}, {boot[4874]:.2f}]$"
+filas.insert(0, ["Multi agent vs Naive RAG, complex", len(mh["multi_7b"]), sa, sb, texto_p(signo(sa, sb))])
+mh_sa = {json.loads(l)["id"]: json.loads(l)["correcto"] for l in open(RESULTS / "multisalto" / "respuestas_multi_sin_auditor_7b.jsonl")}
+a1 = sum(mh["multi_7b"][i] and not mh_sa[i] for i in mh_sa); b1 = sum(mh_sa[i] and not mh["multi_7b"][i] for i in mh_sa)
+filas.insert(1, ["Auditor vs no Auditor, complex", len(mh_sa), a1, b1, texto_p(signo(a1, b1))])
+filas[2][4] += f", CI $[{boot[125]:.2f}, {boot[4874]:.2f}]$"
 tabla("paired", "Paired comparison; 7B unless stated. A only and B only count the queries one system answers correctly "
       "and the other does not. Two sided sign test; the interval is a 95 percent bootstrap of the accuracy difference.",
       "tab:paired", "lcccl", "A vs B & $n$ & A only & B only & Test", filas)
@@ -88,10 +91,13 @@ tabla("detector", "Auditor verdict against the test outcome on the 15 MBPP queri
 
 # Multisalto
 mt = figures.tabla_multisalto()
-tabla("multihop", "Multi hop queries: two documents and one subtraction.", "tab:multihop", "lcccc",
-      "System & Accuracy & Both docs & Seconds & LLM calls",
-      [[NOMBRE[n], f2(r["Acierto"]), f2(r["Ambos documentos recuperados"]), f"{r['Segundos por consulta']:.1f}",
-        f"{r['Llamadas al LLM']:.1f}"] for n, r in mt.iterrows()])
+con_juez = "Faithfulness" in mt
+tabla("multihop", f"The {len(mh['multi_7b'])} complex queries: each needs two documents and one subtraction. "
+      "Faithfulness and Answer Relevance from the judge.", "tab:multihop", "lcccccc" if con_juez else "lcccc",
+      "System & Accuracy & " + ("Faithful. & Answer Rel. & " if con_juez else "") + "Both docs & Seconds & LLM calls",
+      [[NOMBRE[n], f2(r["Acierto"]), *([f2(r["Faithfulness"]), f2(r["Answer Relevance"])] if con_juez else []),
+        f2(r["Ambos documentos recuperados"]), f"{r['Segundos por consulta']:.1f}", f"{r['Llamadas al LLM']:.1f}"]
+       for n, r in mt.iterrows()])
 
 # Auditor v1 frente a v2 en código
 a = figures.comparar_auditor_codigo()

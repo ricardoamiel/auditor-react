@@ -65,11 +65,11 @@ def correccion(juez, pregunta, respuesta, referencia):
     return texto.strip().upper().startswith("Y")
 
 
-def evaluar_pendientes(juez, emb, consultas, orden):
+def evaluar_pendientes(juez, emb, consultas, orden, carpeta=RESULTS):
     """Evalúa las respuestas que aún no tienen juicio; devuelve cuántas evaluó."""
     n = 0
     for s in orden:
-        ruta, salida = RESULTS / f"respuestas_{s}.jsonl", RESULTS / f"juez_{s}.jsonl"
+        ruta, salida = carpeta / f"respuestas_{s}.jsonl", carpeta / f"juez_{s}.jsonl"
         if not ruta.exists():
             continue
         hechas = {json.loads(l)["id"] for l in open(salida)} if salida.exists() else set()
@@ -93,14 +93,16 @@ def evaluar_pendientes(juez, emb, consultas, orden):
 
 
 if __name__ == "__main__":
-    consultas = {q["id"]: q for q in json.load(open(DATA / "consultas_eval.json"))}
+    multisalto = "--multisalto" in sys.argv  # juzga las 50 consultas multisalto en results/multisalto
+    archivo, carpeta = ("consultas_multisalto.json", RESULTS / "multisalto") if multisalto else ("consultas_eval.json", RESULTS)
+    consultas = {q["id"]: q for q in json.load(open(DATA / archivo))}
     juez = LLM(JUDGE, cuatro_bits=torch.cuda.mem_get_info()[0] < 35e9)  # bf16 si hay 35 GB libres
     emb = SentenceTransformer(EMBEDDER, device="cuda")
     orden = ["multi_7b", "naive_7b", "multi_sin_auditor_7b", "multi_1.5b", "naive_1.5b"]  # prioridad
     seguir = "--seguir" in sys.argv  # evalúa mientras la generación sigue corriendo y termina cuando ella termina
     while True:
         generando = seguir and subprocess.run(["pgrep", "-f", "run_eval.py"], capture_output=True).returncode == 0
-        nuevas = evaluar_pendientes(juez, emb, consultas, orden)
+        nuevas = evaluar_pendientes(juez, emb, consultas, orden, carpeta)
         if not generando and not nuevas:
             break
         if nuevas == 0:

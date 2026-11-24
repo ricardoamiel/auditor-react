@@ -289,6 +289,10 @@ def tabla_multisalto(carpeta=RESULTS / "multisalto"):
             r = pd.DataFrame([json.loads(l) for l in open(ruta)])
             filas[SISTEMAS[s][0]] = {"Acierto": r["correcto"].mean(), "Ambos documentos recuperados": r["ambos_docs"].mean(),
                                      "Segundos por consulta": r["segundos"].mean(), "Llamadas al LLM": r["llamadas_llm"].mean()}
+            juez = carpeta / f"juez_{s}.jsonl"
+            if juez.exists():  # Faithfulness y Answer Relevance del juez, si ya se evaluaron
+                j = pd.DataFrame([json.loads(l) for l in open(juez)])
+                filas[SISTEMAS[s][0]].update({"Faithfulness": j["faithfulness"].mean(), "Answer Relevance": j["answer_relevance"].mean()})
     return pd.DataFrame(filas).T
 
 

@@ -137,7 +137,7 @@ assert binomial_probability(12, 7, 3.0/5) == 0.227030335488
 
 ## 5. Multisalto: dos documentos y un cálculo
 
-Son las mejores para comparar en vivo: conviene correrlas en modo multiagente y luego en Naive RAG. En la evaluación el multiagente acertó 0.93 y el Naive 0.53.
+Son las mejores para comparar en vivo: conviene correrlas en modo multiagente y luego en Naive RAG. En la evaluación con 50 consultas complejas el multiagente acertó 0.88 y el Naive 0.28.
 
 | Pregunta | Respuesta |
 |---|---|
