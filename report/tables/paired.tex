@@ -1,0 +1,17 @@
+\begin{table}[!tb]
+\centering
+\caption{Paired comparison; 7B unless stated. A only and B only count the queries one system answers correctly and the other does not. Two sided sign test; the interval is a 95 percent bootstrap of the accuracy difference.}
+\label{tab:paired}
+\small
+\begin{tabular}{lcccl}
+\toprule
+A vs B & $n$ & A only & B only & Test \\
+\midrule
+Multi agent vs Naive RAG & 50 & 4 & 4 & $p = 1.00$, CI $[-0.12, 0.10]$ \\
+Multi agent vs Naive RAG, multi hop & 15 & 6 & 0 & $p = 0.03$ \\
+Auditor vs no Auditor & 50 & 3 & 1 & $p = 0.63$ \\
+Naive RAG 7B vs 1.5B & 50 & 14 & 0 & $p < 0.001$ \\
+Multi agent 1.5B vs Naive RAG 1.5B & 50 & 5 & 6 & $p = 1.00$ \\
+\bottomrule
+\end{tabular}
+\end{table}

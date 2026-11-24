@@ -1,0 +1,18 @@
+\begin{table*}[!tb]
+\centering
+\caption{Results on the 50 dataset queries. Faithfulness and Answer Relevance from the judge; accuracy per task and overall; mean cost per query.}
+\label{tab:main}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{lcccccccc}
+\toprule
+System & Faithful. & Answer Rel. & WikiQA & GSM8K & MBPP & Overall & Seconds & Calls \\
+\midrule
+Multi agent 7B & 0.84 & 0.68 & 0.80 & 1.00 & 0.53 & 0.78 & 44.6 & 6.2 \\
+Naive RAG 7B & 0.91 & 0.72 & 0.85 & 1.00 & 0.47 & 0.78 & 4.8 & 1.0 \\
+Multi agent, no Auditor 7B & 0.84 & 0.68 & 0.80 & 0.93 & 0.47 & 0.74 & 38.6 & 4.2 \\
+Multi agent 1.5B & 0.47 & 0.44 & 0.65 & 0.60 & 0.13 & 0.48 & 49.4 & 6.8 \\
+Naive RAG 1.5B & 0.78 & 0.64 & 0.60 & 0.73 & 0.13 & 0.50 & 3.8 & 1.0 \\
+\bottomrule
+\end{tabular}
+\end{table*}

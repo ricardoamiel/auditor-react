@@ -21,9 +21,46 @@ NODOS = {"Investigador": "#2a78d6", "Herramientas": "#eb6834", "Auditor": "#1baf
 TIPOS = {"wiki": "WikiQA (hechos)", "math": "GSM8K (matemáticas)", "code": "MBPP (código)"}
 
 
+# Versión en inglés para el reporte: report_assets.py pone IDIOMA = "en" y SALIDA = report/figures
+IDIOMA, SALIDA = "es", FIGURES
+EN_EXACTO = {"Inicio": "Start", "Fin": "End", "Acierto": "Accuracy", "Consultas": "Queries", "reporte": "report",
+             "rechazo": "rejection", "aprobado": "approved", "sin Auditor": "no Auditor"}
+EN = [("Multiagente sin Auditor", "Multi agent, no Auditor"), ("Multiagente", "Multi agent"),
+      ("Investigador", "Researcher"), ("Herramientas", "Tools"), ("Redactor", "Writer"),
+      ("Faithfulness (fidelidad al contexto)", "Faithfulness"), ("Answer Relevance (relevancia)", "Answer Relevance"),
+      ("WikiQA (hechos)", "WikiQA (facts)"), ("GSM8K (matemáticas)", "GSM8K (math)"), ("MBPP (código)", "MBPP (code)"),
+      ("Acierto global", "Overall accuracy"), ("Acierto en k (WikiQA)", "Hit at k (WikiQA)"),
+      ("Segundos por consulta (escala logarítmica)", "Seconds per query (log scale)"),
+      ("Segundos promedio por consulta", "Mean seconds per query"), ("k documentos recuperados", "k retrieved documents"),
+      ("Ambos documentos recuperados", "Both documents retrieved"), ("rechazos", "rejections"), ("rechazo", "rejection")]
+
+
+def _en(s):
+    if s in EN_EXACTO:
+        return EN_EXACTO[s]
+    for a, b in EN:
+        s = s.replace(a, b)
+    return s
+
+
+def traducir(fig):
+    import matplotlib.text
+    fig.canvas.draw()  # las etiquetas de los ejes se crean al dibujar
+    for ax in fig.axes:
+        for eje in (ax.xaxis, ax.yaxis):
+            textos = [t.get_text() for t in eje.get_ticklabels()]
+            if any(textos):
+                eje.set_ticks(eje.get_ticklocs(), [_en(x) for x in textos])
+    for t in fig.findobj(matplotlib.text.Text):
+        t.set_text(_en(t.get_text()))
+
+
 def guardar(fig, nombre):
-    for ext in ("pdf", "svg"):
-        fig.savefig(FIGURES / f"{nombre}.{ext}", bbox_inches="tight")
+    if IDIOMA == "en":
+        traducir(fig)
+    SALIDA.mkdir(parents=True, exist_ok=True)
+    for ext in ("pdf", "svg") if IDIOMA == "es" else ("pdf",):
+        fig.savefig(SALIDA / f"{nombre}.{ext}", bbox_inches="tight")
 
 
 def cargar_resultados(carpeta=RESULTS):

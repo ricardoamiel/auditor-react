@@ -1,0 +1,15 @@
+\begin{table}[!tb]
+\centering
+\caption{Multi hop queries: two documents and one subtraction.}
+\label{tab:multihop}
+\small
+\begin{tabular}{lcccc}
+\toprule
+System & Accuracy & Both docs & Seconds & LLM calls \\
+\midrule
+Multi agent 7B & 0.93 & 0.80 & 26.3 & 8.7 \\
+Naive RAG 7B & 0.53 & 0.27 & 2.4 & 1.0 \\
+Multi agent, no Auditor 7B & 0.93 & 0.80 & 19.9 & 5.7 \\
+\bottomrule
+\end{tabular}
+\end{table}

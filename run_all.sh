@@ -17,7 +17,7 @@ $PY codes/judge.py >> slurm/logs/juez.log 2>&1   # barrido final por si quedó a
 # Consultas multisalto: dos documentos y un cálculo
 $PY codes/multihop.py
 $PY codes/run_eval.py --modelo 7b --sistemas naive multi multi_sin_auditor --consultas consultas_multisalto.json --carpeta multisalto
-$PY codes/tablas_tex.py
+$PY codes/report_assets.py
 $PY codes/export_web.py
 $PY -m nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=-1 notebooks/proyecto_final.ipynb
 echo PIPELINE_OK
