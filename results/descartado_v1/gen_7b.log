@@ -1,32 +1,0 @@
-Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [01:18<03:54, 78.33s/it]Loading checkpoint shards:  50%|█████     | 2/4 [02:13<02:08, 64.43s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [02:59<00:56, 56.36s/it]Loading checkpoint shards: 100%|██████████| 4/4 [03:43<00:00, 51.51s/it]Loading checkpoint shards: 100%|██████████| 4/4 [03:43<00:00, 55.97s/it]
-The following generation flags are not valid and may be ignored: ['temperature', 'top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
-The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-multi_7b wiki_q163 28.3s llamadas=5 correcto=True
-multi_7b wiki_q28 27.5s llamadas=6 correcto=True
-multi_7b wiki_q6 84.1s llamadas=8 correcto=True
-multi_7b wiki_q189 18.2s llamadas=5 correcto=True
-multi_7b wiki_q70 21.8s llamadas=8 correcto=True
-multi_7b wiki_q62 46.2s llamadas=7 correcto=True
-multi_7b wiki_q57 23.1s llamadas=5 correcto=True
-multi_7b wiki_q35 22.1s llamadas=7 correcto=True
-multi_7b wiki_q188 6.5s llamadas=4 correcto=True
-multi_7b wiki_q26 35.5s llamadas=7 correcto=True
-multi_7b wiki_q173 97.3s llamadas=13 correcto=True
-multi_7b wiki_q228 67.1s llamadas=9 correcto=True
-multi_7b wiki_q139 48.1s llamadas=7 correcto=True
-multi_7b wiki_q22 10.2s llamadas=4 correcto=True
-multi_7b wiki_q151 22.2s llamadas=5 correcto=True
-multi_7b wiki_q108 13.5s llamadas=4 correcto=True
-multi_7b wiki_q8 98.7s llamadas=10 correcto=True
-multi_7b wiki_q7 35.6s llamadas=6 correcto=True
-multi_7b wiki_q23 29.7s llamadas=5 correcto=True
-multi_7b wiki_q55 35.5s llamadas=5 correcto=True
-multi_7b math_q476 28.7s llamadas=6 correcto=True
-multi_7b math_q1034 19.7s llamadas=5 correcto=True
-multi_7b math_q1232 31.5s llamadas=5 correcto=True
-multi_7b math_q54 39.7s llamadas=5 correcto=True
-multi_7b math_q1149 34.6s llamadas=7 correcto=True
-multi_7b math_q407 95.3s llamadas=10 correcto=True
-multi_7b math_q1116 18.2s llamadas=5 correcto=True
-multi_7b math_q859 56.5s llamadas=7 correcto=True
-multi_7b math_q451 147.1s llamadas=14 correcto=True

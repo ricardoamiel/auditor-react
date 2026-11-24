@@ -1,39 +1,0 @@
-Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]Loading checkpoint shards:  17%|█▋        | 1/6 [01:02<05:14, 62.99s/it]Loading checkpoint shards:  33%|███▎      | 2/6 [01:55<03:46, 56.67s/it]Loading checkpoint shards:  50%|█████     | 3/6 [02:46<02:42, 54.20s/it]Loading checkpoint shards:  67%|██████▋   | 4/6 [03:44<01:51, 55.82s/it]Loading checkpoint shards:  83%|████████▎ | 5/6 [04:38<00:55, 55.04s/it]Loading checkpoint shards: 100%|██████████| 6/6 [05:38<00:00, 56.81s/it]Loading checkpoint shards: 100%|██████████| 6/6 [05:38<00:00, 56.45s/it]
-The attention mask is not set and cannot be inferred from input because pad token is same as eos token. As a consequence, you may observe unexpected behavior. Please pass your input's `attention_mask` to obtain reliable results.
-multi_7b wiki_q163 0.5 0.138 False
-multi_7b wiki_q28 0.42857142857142855 0.078 False
-multi_7b wiki_q6 0.6363636363636364 0.221 False
-multi_7b wiki_q189 0.07692307692307693 0.442 True
-multi_7b wiki_q70 0.05555555555555555 0.516 False
-multi_7b wiki_q62 0.1 0.556 False
-multi_7b wiki_q57 0.2 0.221 False
-multi_7b wiki_q35 0.045454545454545456 0.154 False
-multi_7b wiki_q188 0.14285714285714285 0.09 True
-multi_7b wiki_q26 0.16666666666666666 0.476 True
-multi_7b wiki_q173 1.0 0.643 True
-multi_7b wiki_q228 0.4 0.225 False
-multi_7b wiki_q139 0.08333333333333333 0.557 False
-multi_7b wiki_q22 0.14285714285714285 0.118 True
-multi_7b wiki_q151 0.14285714285714285 0.194 True
-multi_7b wiki_q108 0.058823529411764705 0.467 False
-multi_7b wiki_q8 0.0 0.356 False
-multi_7b wiki_q7 0.2 0.689 False
-multi_7b wiki_q23 0.2727272727272727 0.053 False
-multi_7b wiki_q55 0.0 0.252 False
-multi_7b math_q476 0.3333333333333333 0.158 None
-multi_7b math_q1034 0.0 0.119 None
-multi_7b math_q1232 0.0 0.295 None
-multi_7b math_q54 0.0 0.265 None
-multi_7b math_q1149 0.0 0.226 None
-multi_7b math_q407 0.0 0.189 None
-multi_7b math_q1116 0.0 0.051 None
-multi_7b math_q859 0.0 0.185 None
-multi_1.5b wiki_q163 0.0 0.135 False
-multi_1.5b wiki_q28 0.0 0.243 False
-multi_1.5b wiki_q6 0.0 0.2 False
-multi_1.5b wiki_q189 0.0 -0.065 False
-multi_1.5b wiki_q70 0.0 0.143 False
-multi_1.5b wiki_q62 0.5 -0.007 False
-srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
-[2026-11-16T01:58:23.919] error: *** STEP 63283.0 ON g002 CANCELLED AT 2026-11-16T01:58:23 DUE to SIGNAL Terminated ***
-srun: error: g002: task 0: Terminated
