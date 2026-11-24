@@ -92,12 +92,19 @@ tabla("detector", "Auditor verdict against the test outcome on the 15 MBPP queri
 # Multisalto
 mt = figures.tabla_multisalto()
 con_juez = "Faithfulness" in mt
+# Primer Redactor (solo la línea Final answer), conservado en results/multisalto/redactor_v1 como referencia
+filas_v1 = []
+v1 = figures.tabla_multisalto(RESULTS / "multisalto" / "redactor_v1")
+if con_juez and "Faithfulness" in v1:
+    filas_v1 = [[NOMBRE[n] + ", first Writer", f2(r["Acierto"]), f2(r["Faithfulness"]), f2(r["Answer Relevance"]),
+                 f2(r["Ambos documentos recuperados"]), f"{r['Segundos por consulta']:.1f}", f"{r['Llamadas al LLM']:.1f}"]
+                for n, r in v1.iterrows()]
 tabla("multihop", f"The {len(mh['multi_7b'])} complex queries: each needs two documents and one subtraction. "
       "Faithfulness and Answer Relevance from the judge.", "tab:multihop", "lcccccc" if con_juez else "lcccc",
       "System & Accuracy & " + ("Faithful. & Answer Rel. & " if con_juez else "") + "Both docs & Seconds & LLM calls",
       [[NOMBRE[n], f2(r["Acierto"]), *([f2(r["Faithfulness"]), f2(r["Answer Relevance"])] if con_juez else []),
         f2(r["Ambos documentos recuperados"]), f"{r['Segundos por consulta']:.1f}", f"{r['Llamadas al LLM']:.1f}"]
-       for n, r in mt.iterrows()])
+       for n, r in mt.iterrows()] + filas_v1, ancho=True)
 
 # Auditor v1 frente a v2 en código
 a = figures.comparar_auditor_codigo()

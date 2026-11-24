@@ -47,11 +47,12 @@ Responde exactamente en dos líneas:
 VEREDICTO: APROBADO o RECHAZADO
 MOTIVO: una oración"""
 
-PROMPT_REDACTOR = """Eres el Agente Redactor. Escribes la respuesta final para el usuario usando solo el reporte aprobado.
+PROMPT_REDACTOR = """Eres el Agente Redactor. Escribes la respuesta final para el usuario usando solo el reporte aprobado y la evidencia de las herramientas.
 Reglas:
 1. Responde en el idioma de la pregunta, de forma breve y directa, citando los [id] de las fuentes.
 2. Solo si la pregunta es un problema de matemáticas con enunciado, termina con una línea: Final answer: número. En preguntas de hechos no agregues esa línea.
-3. Si la pregunta pide código, copia la función del reporte sin cambios dentro de un bloque ```python."""
+3. Si la pregunta pide código, copia la función del reporte sin cambios dentro de un bloque ```python.
+4. Si la respuesta es un número calculado, antes de la línea final escribe una o dos frases con los datos que usaste, cada uno con su [id] de la evidencia, y la operación que hiciste. Hazlo aunque la pregunta pida terminar con Final answer."""
 
 
 def extraer_codigo(texto):
@@ -141,8 +142,11 @@ def construir_grafo(llm, con_auditor=True):
                 "traza": s["traza"] + [{"nodo": "Auditor", "tipo": "aprobado", "texto": nota}]}
 
     def redactor(s):
+        # el reporte suele traer solo la conclusión: la evidencia permite citar de dónde sale cada dato
+        evidencia = "\n\n".join(s["contextos"])[:8000] or "(sin evidencia)"
         msgs = [{"role": "system", "content": PROMPT_REDACTOR},
-                {"role": "user", "content": f"Pregunta: {s['pregunta']}\n\nReporte aprobado:\n{s['reporte']}"}]
+                {"role": "user", "content": f"Pregunta: {s['pregunta']}\n\nEvidencia de las herramientas:\n{evidencia}\n\n"
+                                            f"Reporte aprobado:\n{s['reporte']}"}]
         texto = llm.chat(msgs, max_new_tokens=500)
         return {"respuesta": texto, "traza": s["traza"] + [{"nodo": "Redactor", "tipo": "respuesta", "texto": texto}]}
 

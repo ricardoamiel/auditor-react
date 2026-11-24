@@ -43,8 +43,9 @@ const esMateP = p => /\d/.test(p) && !esCodigoP(p);
 const formato = p => esCodigoP(p) ? "\nEntrega la función completa dentro de un bloque ```python."
   : esMateP(p) ? "\nTermina con una última línea con este formato exacto: Final answer: seguido del número." : "";
 
-const P_RED = `Eres el Agente Redactor. Escribes la respuesta final para el usuario usando solo el reporte aprobado.
-Responde en el idioma de la pregunta, de forma breve y directa, citando los [id] de las fuentes.`;
+const P_RED = `Eres el Agente Redactor. Escribes la respuesta final para el usuario usando solo el reporte aprobado y la evidencia de las herramientas.
+Responde en el idioma de la pregunta, de forma breve y directa, citando los [id] de las fuentes.
+Si la respuesta es un número calculado, antes de la línea final escribe una o dos frases con los datos que usaste, cada uno con su [id], y la operación que hiciste.`;
 
 // Base de conocimiento: textos y embeddings int8 exportados por codes/export_web.py
 let KB = null, VEC = null, embedder = null;
@@ -174,7 +175,7 @@ export async function correrAgentes(pregunta, llm, { conAuditor = true, emit = (
     } else if (nodo === "Redactor") {
       let resp = "";
       await paso("Redactor", async () => {
-        resp = await llm([{ role: "system", content: P_RED }, { role: "user", content: `Pregunta: ${pregunta}\n\nReporte aprobado:\n${s.reporte}${formato(pregunta)}` }], 500);
+        resp = await llm([{ role: "system", content: P_RED }, { role: "user", content: `Pregunta: ${pregunta}\n\nEvidencia de las herramientas:\n${s.contextos.join("\n\n").slice(0, 8000) || "(sin evidencia)"}\n\nReporte aprobado:\n${s.reporte}${formato(pregunta)}` }], 500);
         return { tipo: "respuesta", texto: resp };
       });
       nodo = "Fin";

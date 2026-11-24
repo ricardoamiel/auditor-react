@@ -12,7 +12,7 @@ Un sistema de tres agentes que resuelve consultas que un solo paso de RAG suele 
 
 1. **Investigador.** Razona con el ciclo Thought, Action, Observation y elige entre tres herramientas: buscar_kb (índice FAISS local), buscar_web (DuckDuckGo con respaldo en Wikipedia) y ejecutar_python (cálculos y pruebas de código).
 2. **Auditor de Hechos.** Revisa el reporte. Lo rechaza si no se apoya en ninguna herramienta, si el código no pasa los tests o si el LLM detecta datos que no aparecen en las observaciones. Al rechazar, devuelve el flujo al Investigador con el motivo, hasta 2 veces.
-3. **Redactor.** Escribe la respuesta final citando los documentos.
+3. **Redactor.** Escribe la respuesta final a partir del reporte aprobado y de la evidencia de las herramientas, citando los documentos; si la respuesta es un número calculado, antes muestra los datos usados con su fuente y la operación.
 
 El orquestador es Qwen2.5 7B Instruct cuantizado en 4 bits NF4 (unos 6 GB de VRAM). Se compara contra un Naive RAG de un solo paso en 50 consultas complejas (dos documentos y un cálculo) y en 50 consultas de los datasets como control, con Faithfulness y Answer Relevance según RAGAS, usando Phi 4 como juez, más métricas objetivas por tarea.
 
@@ -22,9 +22,10 @@ Consultas complejas: 50 preguntas que piden los años entre dos eventos descrito
 
 | Sistema | Acierto | Faithfulness | Answer Relevance | Ambos documentos recuperados | Segundos | Llamadas al LLM |
 |---|---|---|---|---|---|---|
-| Multiagente 7B | 0.88 | 0.30 | 0.21 | 0.76 | 31.4 | 9.1 |
+| Multiagente 7B | 0.88 | 0.94 | 0.72 | 0.78 | 55.1 | 9.4 |
 | Naive RAG 7B | 0.28 | 0.77 | 0.68 | 0.10 | 3.0 | 1.0 |
-| Multiagente sin Auditor 7B | 0.84 | 0.28 | 0.21 | 0.76 | 23.0 | 5.8 |
+| Multiagente sin Auditor 7B | 0.84 | 0.94 | 0.72 | 0.76 | 40.2 | 5.8 |
+| Multiagente 7B con el primer Redactor | 0.88 | 0.30 | 0.21 | 0.76 | 31.4 | 9.1 |
 
 Consultas de los datasets (control): 20 de WikiQA, 15 de GSM8K y 15 de MBPP, que casi siempre se resuelven con una sola recuperación.
 
@@ -36,8 +37,8 @@ Consultas de los datasets (control): 20 de WikiQA, 15 de GSM8K y 15 de MBPP, que
 | Multiagente 1.5B | 0.47 | 0.44 | 0.48 | 49.4 |
 | Naive RAG 1.5B | 0.78 | 0.64 | 0.50 | 3.8 |
 
-1. En las consultas complejas el multiagente supera con claridad al Naive RAG: 0.88 frente a 0.28. Busca cada evento por separado y recupera ambos documentos en el 76 % de los casos, contra el 10 % de una sola búsqueda.
-2. En esas mismas consultas Faithfulness y Answer Relevance favorecen al Naive RAG aunque acierta mucho menos. El multiagente responde solo "Final answer: 41": el juez no encuentra la resta escrita en los documentos y, a partir de un número suelto, genera preguntas que no se parecen a la original. El Naive responde frases sobre su contexto, muchas veces para decir que no puede calcularlo. Estas métricas miden respaldo y tema, no corrección; en respuestas numéricas manda el acierto exacto.
+1. En las consultas complejas el multiagente supera con claridad al Naive RAG: 0.88 frente a 0.28. Busca cada evento por separado y recupera ambos documentos en el 78 % de los casos, contra el 10 % de una sola búsqueda.
+2. En esas mismas consultas también gana en Faithfulness (0.94 frente a 0.77) y Answer Relevance (0.72 frente a 0.68). Con el primer Redactor, que respondía solo "Final answer: 41", el acierto era el mismo pero las métricas caían a 0.30 y 0.21: el juez no encontraba la resta en los documentos y, a partir de un número suelto, generaba preguntas que no se parecían a la original. Ahora el Redactor recibe también la evidencia de las herramientas y cita los dos años con su fuente antes del número. Estas métricas miden respaldo y tema, no corrección. Las respuestas del primer Redactor están en results/multisalto/redactor_v1.
 3. En las preguntas de los datasets empatan en acierto y el Naive es algo más fiel; el multiagente gana en código (MBPP), donde ejecuta y verifica los tests.
 4. El Auditor ayuda cuando puede comprobar algo concreto y devuelve el error; con un orquestador de 1.5B la arquitectura empeora.
 5. Recomendación de producción: Naive RAG por defecto y el grafo completo para consultas compuestas, cálculos o código.
@@ -48,14 +49,14 @@ Como los cinco sistemas responden las mismas consultas, las diferencias se anali
 
 | Comparación | Consultas | Solo acierta el primero | Solo acierta el segundo | Prueba | Lectura |
 |---|---|---|---|---|---|
-| Multiagente 7B frente a Naive 7B | 50 complejas | 30 | 0 | prueba del signo, p < 0.001 | Gana el multiagente |
-| Con Auditor frente a sin Auditor | 50 complejas | 2 | 0 | p = 0.50 | No concluyente |
+| Multiagente 7B frente a Naive 7B | 50 complejas | 31 | 1 | prueba del signo, p < 0.001 | Gana el multiagente |
+| Con Auditor frente a sin Auditor | 50 complejas | 4 | 2 | p = 0.69 | No concluyente |
 | Multiagente 7B frente a Naive 7B | 50 de datasets | 4 | 4 | IC 95 % de la diferencia: −0.12 a 0.10 | Empate |
 | Con Auditor frente a sin Auditor | 50 de datasets | 3 | 1 | p = 0.63 | No concluyente |
 | Naive 7B frente a Naive 1.5B | 50 | 14 | 0 | p < 0.001 | Pesa el modelo |
 
 1. **Fidelidad.** La Faithfulness del multiagente es igual a la del Naive en WikiQA (0.91 y 0.92) y menor en GSM8K (0.83 y 1.00) y MBPP (0.74 y 0.82): ahí la respuesta afirma resultados calculados con Python o describe el código, que no están en los documentos recuperados. La métrica castiga lo que el sistema calcula, no lo que inventa.
-2. **Errores.** En las complejas el multiagente falla 6 de 50: cuatro con ambos documentos (dos por un año de diferencia y dos por tomar otro año del artículo) y dos en que no recuperó uno de los artículos. El Auditor rechazó las seis al menos una vez, pero no rehace la resta. En las de datasets falla 11: 7 de MBPP en las que el Auditor encontró el test que falla y agotó sus dos rechazos, 3 respuestas parciales de WikiQA y 1 referencia desactualizada (Yankee Stadium). Siete de las 11 también las falla el Naive.
+2. **Errores.** En las complejas el multiagente falla 6 de 50, y como el Redactor muestra los años, cada error se puede rastrear: dos homónimos (otro Brian Williams y otro Mark Jackson), dos eventos con dos años defendibles (la MLS se fundó en 1993 y jugó desde 1996; la pirámide alimentaria tiene versiones de 1974 y 1992), un año tomado de la web y un año de diferencia al restar fechas completas. El Auditor los rechazó pero no cuestiona qué entidad o qué fecha se recuperó. En las de datasets falla 11: 7 de MBPP en las que el Auditor encontró el test que falla y agotó sus dos rechazos, 3 respuestas parciales de WikiQA y 1 referencia desactualizada (Yankee Stadium). Siete de las 11 también las falla el Naive.
 3. **El Auditor como detector.** En MBPP las 8 respuestas que aprobó pasan los tests y las 7 que rechazó dos veces fallan. Su veredicto sirve para avisar al usuario que un código no está verificado. En GSM8K rechazó en 7 de 15 problemas y solo cambió un resultado: ahí sobre todo agrega tiempo.
 4. **Costo.** El Investigador consume el 75 % de los 44.6 s por consulta y fue a la web en el 75 % de las preguntas de WikiQA aunque el documento correcto ya estaba en la base.
 

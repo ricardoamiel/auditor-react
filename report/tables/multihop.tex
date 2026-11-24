@@ -1,15 +1,18 @@
-\begin{table}[!tb]
+\begin{table*}[!tb]
 \centering
 \caption{The 50 complex queries: each needs two documents and one subtraction. Faithfulness and Answer Relevance from the judge.}
 \label{tab:multihop}
-\small
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
 \begin{tabular}{lcccccc}
 \toprule
 System & Accuracy & Faithful. & Answer Rel. & Both docs & Seconds & LLM calls \\
 \midrule
-Multi agent 7B & 0.88 & 0.30 & 0.21 & 0.76 & 31.4 & 9.1 \\
+Multi agent 7B & 0.88 & 0.94 & 0.72 & 0.78 & 55.1 & 9.4 \\
 Naive RAG 7B & 0.28 & 0.77 & 0.68 & 0.10 & 3.0 & 1.0 \\
-Multi agent, no Auditor 7B & 0.84 & 0.28 & 0.21 & 0.76 & 23.0 & 5.8 \\
+Multi agent, no Auditor 7B & 0.84 & 0.94 & 0.72 & 0.76 & 40.2 & 5.8 \\
+Multi agent 7B, first Writer & 0.88 & 0.30 & 0.21 & 0.76 & 31.4 & 9.1 \\
+Multi agent, no Auditor 7B, first Writer & 0.84 & 0.28 & 0.21 & 0.76 & 23.0 & 5.8 \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{table*}
