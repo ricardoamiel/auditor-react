@@ -100,9 +100,14 @@ Los sistemas evaluados son naive_7b, multi_7b, multi_sin_auditor_7b, naive_1.5b 
 | app/server.py | API en FastAPI que ejecuta el grafo en Python y transmite cada evento a la página. |
 | notebooks/servidor_colab.ipynb | Levanta en Colab el servidor del 7B con un túnel público y devuelve el enlace a la aplicación. |
 | PREGUNTAS.md | Contenido de cada fuente de la base de conocimiento y banco de preguntas para probar el sistema. |
+| tests/ | Pruebas con pytest de los extractores, la ejecución de tests de código, los errores de herramientas y el flujo del grafo con un LLM de guion, sin cargar modelos. |
 | report/main.tex | Reporte técnico en el formato NeurIPS, en inglés. |
 | slurm/*.sh | Jobs de Khipu (preparación, prueba corta y pipeline completo) y la sincronización de checkpoints. |
 | run_all.sh, setup_aws.sh, make_bundle.sh | Pipeline completo, arranque en una instancia en la nube y empaquetado para traspaso. |
+
+## Tests
+
+python -m pytest tests corre 11 pruebas en unos segundos y sin GPU. Cubren las piezas deterministas de las que dependen las métricas y los guardrails: el extractor de números (incluido el caso de las citas [1] que se leían como respuesta), el extractor de código, la verificación con los asserts de MBPP, el límite de tiempo y los errores de herramientas. Con un LLM de guion, que devuelve respuestas preparadas, prueban además el grafo completo: el Auditor rechaza código que falla y devuelve el assert, el flujo termina al llegar al límite de rechazos, un reporte sin evidencia se rechaza y una herramienta mal escrita vuelve como Observation.
 
 ## Cómo ejecutar
 

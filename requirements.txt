@@ -17,3 +17,4 @@ matplotlib==3.11.2
 networkx==3.6.1
 fastapi==0.163.1
 uvicorn==0.54.0
+pytest==9.2.0
