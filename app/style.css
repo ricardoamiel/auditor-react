@@ -23,9 +23,10 @@ header { display: flex; justify-content: space-between; align-items: center; gap
 h1 { margin: 0; font-size: 24px; }
 h2 { margin: 0 0 6px; font-size: 15px; }
 .sub, .nota { margin: 2px 0 8px; color: var(--text2); font-size: 13px; }
-.lado { display: flex; align-items: center; gap: 14px; }
+.lado { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
 .tema { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
 .tema:hover { border-color: var(--accent); }
+a.tema { text-decoration: none; display: inline-block; }
 .estado { display: flex; align-items: center; gap: 8px; color: var(--text2); font-size: 13px; }
 .punto { width: 10px; height: 10px; border-radius: 50%; background: var(--idle); }
 .punto.listo { background: var(--auditor); }
