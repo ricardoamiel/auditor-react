@@ -72,9 +72,9 @@
     </div>
     <div class="card">
       <h2>Resultados de la evaluación</h2>
-      <p class="nota">Promedios sobre las 50 consultas del proyecto, calculados en el clúster.</p>
+      <p class="nota">Promedios calculados en el clúster Khipu con Qwen2.5 7B en 4 bits y Phi 4 como juez.</p>
       <div id="resultados"></div>
-      <p class="nota">En 15 consultas multisalto, que exigen combinar dos documentos y calcular, el multiagente acierta 0.93 frente a 0.53 del Naive RAG. Recomendación de uso: Naive RAG para preguntas directas y el multiagente para preguntas compuestas, cálculos o código.</p>
+      <p class="nota">En las consultas complejas el multiagente acierta 0.88 frente a 0.28 del Naive RAG y gana 31 de las 32 preguntas en que discrepan; también supera en Faithfulness y Answer Relevance. En las preguntas de los datasets empatan y el Naive RAG es nueve veces más rápido. Recomendación de uso: Naive RAG para preguntas directas y el multiagente para preguntas compuestas, cálculos o código.</p>
     </div>
   </section>
 </main>

@@ -1,37 +1,62 @@
-[
- {
-  "nombre": "Multiagente 7B",
-  "faithfulness": 0.8368979093468889,
-  "answer_relevance": 0.6804094016551971,
-  "acierto": 0.78,
-  "segundos": 44.6412731218338
- },
- {
-  "nombre": "Naive RAG 7B",
-  "faithfulness": 0.9115620490620491,
-  "answer_relevance": 0.7183579584956169,
-  "acierto": 0.78,
-  "segundos": 4.831978278160095
- },
- {
-  "nombre": "Multiagente sin Auditor 7B",
-  "faithfulness": 0.8433333333333333,
-  "answer_relevance": 0.6817058032751083,
-  "acierto": 0.74,
-  "segundos": 38.63756394863129
- },
- {
-  "nombre": "Multiagente 1.5B",
-  "faithfulness": 0.4696111111111111,
-  "answer_relevance": 0.4352980612963438,
-  "acierto": 0.48,
-  "segundos": 49.408947982788085
- },
- {
-  "nombre": "Naive RAG 1.5B",
-  "faithfulness": 0.7776077097505668,
-  "answer_relevance": 0.6418216261267662,
-  "acierto": 0.5,
-  "segundos": 3.8367559146881103
- }
-]
+{
+ "complejas": [
+  {
+   "nombre": "Multiagente 7B",
+   "faithfulness": 0.9423333333333332,
+   "answer_relevance": 0.7232370162010193,
+   "acierto": 0.88,
+   "segundos": 55.09718084335327
+  },
+  {
+   "nombre": "Naive RAG 7B",
+   "faithfulness": 0.7677857142857143,
+   "answer_relevance": 0.6824166190624237,
+   "acierto": 0.28,
+   "segundos": 3.0057815885543824
+  },
+  {
+   "nombre": "Multiagente sin Auditor 7B",
+   "faithfulness": 0.938,
+   "answer_relevance": 0.7235495626926423,
+   "acierto": 0.84,
+   "segundos": 40.17255506515503
+  }
+ ],
+ "control": [
+  {
+   "nombre": "Multiagente 7B",
+   "faithfulness": 0.8368979093468889,
+   "answer_relevance": 0.6804094016551971,
+   "acierto": 0.78,
+   "segundos": 44.6412731218338
+  },
+  {
+   "nombre": "Naive RAG 7B",
+   "faithfulness": 0.9115620490620491,
+   "answer_relevance": 0.7183579584956169,
+   "acierto": 0.78,
+   "segundos": 4.831978278160095
+  },
+  {
+   "nombre": "Multiagente sin Auditor 7B",
+   "faithfulness": 0.8433333333333333,
+   "answer_relevance": 0.6817058032751083,
+   "acierto": 0.74,
+   "segundos": 38.63756394863129
+  },
+  {
+   "nombre": "Multiagente 1.5B",
+   "faithfulness": 0.4696111111111111,
+   "answer_relevance": 0.4352980612963438,
+   "acierto": 0.48,
+   "segundos": 49.408947982788085
+  },
+  {
+   "nombre": "Naive RAG 1.5B",
+   "faithfulness": 0.7776077097505668,
+   "answer_relevance": 0.6418216261267662,
+   "acierto": 0.5,
+   "segundos": 3.8367559146881103
+  }
+ ]
+}

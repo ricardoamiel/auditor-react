@@ -138,10 +138,16 @@ function mostrarEvidencia(docs) {
 async function mostrarResultados() {
   try {
     const r = await (await fetch("data/resultados.json")).json();
-    const cols = [["faithfulness", "Faithfulness"], ["answer_relevance", "Answer Relevance"], ["acierto", "Acierto"], ["segundos", "Segundos"]];
-    let h = `<table><tr><th>Sistema</th>${cols.map((c) => `<th>${c[1]}</th>`).join("")}</tr>`;
-    for (const f of r) h += `<tr><td>${f.nombre}</td>${cols.map(([k]) => `<td>${f[k] == null ? "" : k === "segundos" ? f[k].toFixed(1) : f[k].toFixed(2)}</td>`).join("")}</tr>`;
-    $("resultados").innerHTML = h + "</table>";
+    const cols = [["acierto", "Acierto"], ["faithfulness", "Faithfulness"], ["answer_relevance", "Answer Relevance"], ["segundos", "Segundos"]];
+    const tabla = (filas) => {
+      let h = `<table><tr><th>Sistema</th>${cols.map((c) => `<th>${c[1]}</th>`).join("")}</tr>`;
+      for (const f of filas) h += `<tr><td>${f.nombre}</td>${cols.map(([k]) => `<td>${f[k] == null ? "" : k === "segundos" ? f[k].toFixed(1) : f[k].toFixed(2)}</td>`).join("")}</tr>`;
+      return h + "</table>";
+    };
+    // formato actual: consultas complejas (resultado principal) y preguntas de los datasets (control)
+    $("resultados").innerHTML = Array.isArray(r) ? tabla(r)
+      : `<h3>50 consultas complejas</h3><p class="nota">Cada una exige dos documentos y una resta.</p>${tabla(r.complejas)}`
+        + `<h3>50 preguntas de los datasets (control)</h3><p class="nota">WikiQA, GSM8K y MBPP: casi siempre basta una búsqueda.</p>${tabla(r.control)}`;
   } catch { $("resultados").innerHTML = '<p class="nota">Los resultados se publican al terminar la evaluación.</p>'; }
 }
 
