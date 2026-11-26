@@ -4,21 +4,20 @@ Proyecto final de Procesamiento de Lenguaje Natural, UTEC 2026.
 
 Integrantes: Ricardo Acuña, Juan Aquino y Josué Velo.
 
-El enunciado está en ENUNCIADO.md y el reporte técnico, en inglés, en report/main.pdf.
+## Sobre el repositorio
 
-## Qué es
+Se tiene un sistema de tres agentes que resuelve consultas en los datasets de preguntas de hechos (WikiQA), problemas matemáticos de varios pasos (GSM8K) y programas de Python con tests (MBPP). Los agentes se coordinan con un grafo de estados de LangGraph y se demuestra con un caso que responde mejor que un solo paso en un sistema RAG.
 
-Un sistema de tres agentes que resuelve consultas que un solo paso de RAG suele responder mal: preguntas de hechos (WikiQA), problemas matemáticos de varios pasos (GSM8K) y programas de Python con tests (MBPP). Los agentes se coordinan con un grafo de estados de LangGraph:
-
+## Sobre los agentes
 1. **Investigador.** Razona con el ciclo Thought, Action, Observation y elige entre tres herramientas: buscar_kb (índice FAISS local), buscar_web (DuckDuckGo con respaldo en Wikipedia) y ejecutar_python (cálculos y pruebas de código).
 2. **Auditor de Hechos.** Revisa el reporte. Lo rechaza si no se apoya en ninguna herramienta, si el código no pasa los tests o si el LLM detecta datos que no aparecen en las observaciones. Al rechazar, devuelve el flujo al Investigador con el motivo, hasta 2 veces.
 3. **Redactor.** Escribe la respuesta final a partir del reporte aprobado y de la evidencia de las herramientas, citando los documentos; si la respuesta es un número calculado, antes muestra los datos usados con su fuente y la operación.
 
-El orquestador es Qwen2.5 7B Instruct cuantizado en 4 bits NF4 (unos 6 GB de VRAM). Se compara contra un Naive RAG de un solo paso en 50 consultas complejas (dos documentos y un cálculo) y en 50 consultas de los datasets como control, con Faithfulness y Answer Relevance según RAGAS, usando Phi 4 como juez, más métricas objetivas por tarea.
+El **orquestador** es Qwen2.5 7B Instruct cuantizado en 4 bits NF4 (Pesa alrededor de 6 GB de VRAM). Se compara contra un sistema Naive RAG de un solo paso en 50 consultas complejas (dos documentos y un cálculo) y en 50 consultas de los datasets como control, con Faithfulness y Answer Relevance según RAGAS, usando Phi 4 como juez, más métricas objetivas por tarea.
 
 ## Resultados principales
 
-Consultas complejas: 50 preguntas que piden los años entre dos eventos descritos en dos artículos distintos, así que exigen dos búsquedas y una resta.
+En las consultas complejas, se tienen 50 preguntas que piden los años entre dos eventos descritos en dos artículos distintos, así que exigen dos búsquedas y una resta.
 
 | Sistema | Acierto | Faithfulness | Answer Relevance | Ambos documentos recuperados | Segundos | Llamadas al LLM |
 |---|---|---|---|---|---|---|
@@ -27,7 +26,7 @@ Consultas complejas: 50 preguntas que piden los años entre dos eventos descrito
 | Multiagente sin Auditor 7B | 0.84 | 0.94 | 0.72 | 0.76 | 40.2 | 5.8 |
 | Multiagente 7B con el primer Redactor | 0.88 | 0.30 | 0.21 | 0.76 | 31.4 | 9.1 |
 
-Consultas de los datasets (control): 20 de WikiQA, 15 de GSM8K y 15 de MBPP, que casi siempre se resuelven con una sola recuperación.
+Consultas de los datasets: 20 de WikiQA, 15 de GSM8K y 15 de MBPP, que casi siempre se resuelven con una sola recuperación.
 
 | Sistema | Faithfulness | Answer Relevance | Acierto | Segundos |
 |---|---|---|---|---|
@@ -45,9 +44,9 @@ Consultas de los datasets (control): 20 de WikiQA, 15 de GSM8K y 15 de MBPP, que
 
 ### Análisis de resultados
 
-Como los cinco sistemas responden las mismas consultas, las diferencias se analizan pregunta por pregunta: solo cuentan las consultas en que un sistema acierta y el otro no.
+Como los cinco sistemas responden las mismas consultas, analizamos las diferencias pregunta por pregunta y solo se consideran las consultas en que un sistema acierta y el otro no.
 
-| Comparación | Consultas | Solo acierta el primero | Solo acierta el segundo | Prueba | Lectura |
+| Comparación | Consultas | Solo acierta el primero | Solo acierta el segundo | Prueba | Resultado |
 |---|---|---|---|---|---|
 | Multiagente 7B frente a Naive 7B | 50 complejas | 31 | 1 | prueba del signo, p < 0.001 | Gana el multiagente |
 | Con Auditor frente a sin Auditor | 50 complejas | 4 | 2 | p = 0.69 | No concluyente |
@@ -56,9 +55,16 @@ Como los cinco sistemas responden las mismas consultas, las diferencias se anali
 | Naive 7B frente a Naive 1.5B | 50 | 14 | 0 | p < 0.001 | Pesa el modelo |
 
 1. **Fidelidad.** La Faithfulness del multiagente es igual a la del Naive en WikiQA (0.91 y 0.92) y menor en GSM8K (0.83 y 1.00) y MBPP (0.74 y 0.82): ahí la respuesta afirma resultados calculados con Python o describe el código, que no están en los documentos recuperados. La métrica castiga lo que el sistema calcula, no lo que inventa.
-2. **Errores.** En las complejas el multiagente falla 6 de 50, y como el Redactor muestra los años, cada error se puede rastrear: dos homónimos (otro Brian Williams y otro Mark Jackson), dos eventos con dos años defendibles (la MLS se fundó en 1993 y jugó desde 1996; la pirámide alimentaria tiene versiones de 1974 y 1992), un año tomado de la web y un año de diferencia al restar fechas completas. El Auditor los rechazó pero no cuestiona qué entidad o qué fecha se recuperó. En las de datasets falla 11: 7 de MBPP en las que el Auditor encontró el test que falla y agotó sus dos rechazos, 3 respuestas parciales de WikiQA y 1 referencia desactualizada (Yankee Stadium). Siete de las 11 también las falla el Naive.
-3. **El Auditor como detector.** En MBPP las 8 respuestas que aprobó pasan los tests y las 7 que rechazó dos veces fallan. Su veredicto sirve para avisar al usuario que un código no está verificado. En GSM8K rechazó en 7 de 15 problemas y solo cambió un resultado: ahí sobre todo agrega tiempo.
-4. **Costo.** El Investigador consume el 75 % de los 44.6 s por consulta y fue a la web en el 75 % de las preguntas de WikiQA aunque el documento correcto ya estaba en la base.
+
+2. **Errores.** En las complejas el multiagente falla 6 de 50, el detalle de cada uno los sacamos del Redactor y son los siguientes:
+- Dos homónimos (otro Brian Williams y otro Mark Jackson)
+- Dos eventos con dos años defendibles (la MLS se fundó en 1993 y jugó desde 1996; la pirámide alimentaria tiene versiones de 1974 y 1992)
+- Un año tomado de la web y un año de diferencia al restar fechas completas.
+El Auditor los rechazó pero no cuestiona qué entidad o qué fecha se recuperó. En las de datasets falla 11: 7 de MBPP en las que el Auditor encontró el test que falla y agotó sus dos rechazos, 3 respuestas parciales de WikiQA y 1 referencia desactualizada (Yankee Stadium). Siete de las 11 también las falla el Naive.
+
+5. **Detecciones del Auditor.** En MBPP las 8 respuestas que aprobó pasan los tests y las 7 que rechazó fallan 2 veces. Su veredicto sirve para avisar al usuario que un código no está verificado. En GSM8K rechazó en 7 de 15 problemas y solo cambió un resultado: ahí sobre todo agrega tiempo.
+
+6. **Costo.** El Investigador consume el 75 % de los 44.6 s por consulta y fue a la web en el 75 % de las preguntas de WikiQA aunque el documento correcto ya estaba en la base.
 
 El detalle está en notebooks/proyecto_final.ipynb y en el reporte técnico, report/main.pdf.
 
@@ -70,7 +76,7 @@ El detalle está en notebooks/proyecto_final.ipynb y en el reporte técnico, rep
 | GSM8K (problemas con solución) | Problem y Worked solution de train; la respuesta oro es el número tras ####, sin comas | 7 473, mediana 511 | 15 de test, fuera del índice |
 | MBPP (enunciado, función y 3 asserts) | Task y Solution de train, validation y prompt; tests y setup se guardan aparte para el Auditor | 474, mediana 240 | 15 de test con sus asserts |
 
-Los documentos son cortos y se indexan enteros, sin trocear. Los embeddings de all MiniLM L6 se normalizan y van a un índice FAISS de producto interno, que equivale al coseno; la aplicación web usa los mismos vectores cuantizados a int8. Las consultas se eligen con semilla 42. De las 50 complejas, 15 se eligieron a mano y 35 salen de artículos cuyo primer párrafo da un solo año para la propia entidad, emparejados con semilla fija; los 100 artículos son distintos y cada año se verifica en el texto. PREGUNTAS.md describe con más detalle qué contiene cada fuente.
+Los documentos son cortos y se obtienen los embeddings de all MiniLM L6, se normalizan y van a un índice FAISS para las búsquedas por producto interno; la aplicación web usa los mismos vectores cuantizados a int8. Las consultas se eligen con semilla 42. De las 50 complejas, 15 se eligieron a mano y 35 salen de artículos cuyo primer párrafo da un solo año para la propia entidad, emparejados con semilla fija; los 100 artículos son distintos y cada año se verifica en el texto. PREGUNTAS.md describe con más detalle qué contiene cada fuente.
 
 ## Pipeline de evaluación
 
